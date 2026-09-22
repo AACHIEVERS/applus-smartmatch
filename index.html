@@ -193,4 +193,38 @@ const oldRender=window.render;
 const b=document.getElementById('applyImgSize');
 if(b)b.onclick=()=>{const w=Number(document.getElementById('imgWidth').value);const el=document.querySelector('.image-element.selected');if(el&&w){saveHistory();el.style.width=w+'px';toast('图片尺寸已调整')}}
 })();
+</script><script>
+(function(){
+ let report=[];
+ function analyze(){
+  report=[];
+  slides.forEach((s,i)=>{
+   const title=String(s[0]||'').trim(), body=String(s[2]||'').trim();
+   if(!title) report.push({i,msg:'缺少标题',action:'title'});
+   if(body.length>120) report.push({i,msg:'文字偏多，建议精简',action:'shorten'});
+   if(!s[3]) report.push({i,msg:'未指定版式',action:'layout'});
+   if(i===0 && s[3]!=='cover') report.push({i,msg:'首页建议使用封面版式',action:'cover'});
+   if(i>0 && s[3]==='cover') report.push({i,msg:'内容页不建议使用封面版式',action:'content'});
+  });
+  const box=document.getElementById('autoReport');
+  if(box) box.innerHTML=report.length?('发现 <b>'+report.length+'</b> 项可优化：<br>'+report.slice(0,8).map(x=>'第'+(x.i+1)+'页：'+x.msg).join('<br>'):'当前页面结构没有发现明显问题。');
+  const b=document.getElementById('autoApplyBtn');if(b)b.disabled=!slides.length;
+  toast('自动分析完成');
+ }
+ function apply(){
+  if(!slides.length)return;
+  saveHistory();
+  slides.forEach((s,i)=>{
+   s[0]=String(s[0]||('第 '+(i+1)+' 页')).trim();
+   s[2]=String(s[2]||'');
+   if(s[2].length>120)s[2]=s[2].replace(/。/g,'。\n').split('\n').filter(Boolean).slice(0,5).join('\n');
+   if(i===0)s[3]='cover'; else if(!s[3]||s[3]==='cover')s[3]=['two-column','cards','timeline','chart','content'][(i-1)%5];
+   if(!s[4]&&s[3]==='cards')s[4]=['核心问题','解决方案','预期价值'];
+  });
+  render(); saveLocal(); toast('免费自动优化已完成');
+  document.getElementById('autoReport').innerHTML='✅ 已自动完成：标题检查、文字精简、页面版式整理。';
+ }
+ document.getElementById('analyzeBtn')?.addEventListener('click',analyze);
+ document.getElementById('autoApplyBtn')?.addEventListener('click',apply);
+})();
 </script></body></html>
