@@ -16,7 +16,7 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#17181c;color:#fff;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:1050px){.layout{grid-template-columns:210px 1fr}.right{display:none}}@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.main{padding:16px}.slide{padding:28px}.slide h2{font-size:27px}.canvas{padding:12px;min-height:390px}}
 </style>
-</head>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script></head>
 <body>
 <div class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div>SlideForge AI</div><div class="top-actions"><button class="btn" id="preview">预览</button><button class="btn" id="save">保存</button><button class="btn primary" id="download">导出 PPTX</button></div></header>
@@ -47,8 +47,9 @@ $('magic').onclick=()=>{ $('slide').style.filter='saturate(1.15) contrast(1.03)'
 $('newBtn').onclick=()=>{slides=[...defaultSlides];current=0;$('prompt').value='';render();toast('已新建 PPT')};
 $('save').onclick=()=>toast('项目已保存（演示版）');
 $('preview').onclick=()=>toast('预览模式已打开');
-$('download').onclick=()=>toast('PPTX 导出接口已预留，下一阶段接入真实生成引擎');
-$('file').onchange=e=>{const f=e.target.files[0];if(f){$('status').innerHTML='📎 已上传：<b>'+f.name+'</b><br>下一阶段将解析 PPTX 并允许 AI 逐页修改。';toast('已接收 PPT 文件')}}
-$('drop').ondragover=e=>{e.preventDefault();$('drop').style.background='#f0f1ff'};$('drop').ondragleave=()=>{$('drop').style.background=''};$('drop').ondrop=e=>{e.preventDefault();$('drop').style.background='';const f=e.dataTransfer.files[0];if(f){$('status').innerHTML='📎 已上传：<b>'+f.name+'</b><br>下一阶段将解析 PPTX 并允许 AI 逐页修改。';toast('已接收 PPT 文件')}};
+$('download').onclick=async()=>{try{const pptx=new pptxgen();pptx.layout='LAYOUT_WIDE';pptx.author='SlideForge AI';pptx.subject='AI generated presentation';pptx.title=$('title').textContent;slides.forEach((s,i)=>{const sl=pptx.addSlide();sl.background={color:'FFFFFF'};sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:'5B5CF0'},line:{color:'5B5CF0'}});sl.addText(s[0],{x:.7,y:.55,w:11.8,h:.35,fontSize:12,bold:true,color:'5B5CF0'});sl.addText(s[1],{x:.7,y:1.35,w:11.8,h:1.25,fontSize:28,bold:true,color:'17181C',margin:0,fit:'shrink'});sl.addText(s[2],{x:.7,y:2.9,w:10.8,h:1.2,fontSize:16,color:'60636C',fit:'shrink'});sl.addText(String(i+1).padStart(2,'0'),{x:11.8,y:6.8,w:.6,h:.25,fontSize:9,color:'A0A3AD',align:'right'});});await pptx.writeFile({fileName:'SlideForge-AI.pptx'});toast('PPTX 已生成并下载');}catch(e){console.error(e);toast('导出失败，请稍后重试')}};
+$('file').onchange=async e=>{const f=e.target.files[0];if(f) await inspectPptx(f)};
+async function inspectPptx(f){$('status').innerHTML='⏳ 正在读取 PPTX…';try{if(!/\.pptx$/i.test(f.name))throw new Error('format');const zip=await JSZip.loadAsync(await f.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>(parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])));const parsed=[];for(let i=0;i<names.length;i++){const xml=await zip.file(names[i]).async('string');const text=[...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');parsed.push(['第 '+(i+1)+' 页',text||'（未提取到文字）','AI 已读取这一页的文字内容，可以继续输入修改指令。']);}if(parsed.length){slides=parsed;current=0;render();$('status').innerHTML='✅ 已解析 '+parsed.length+' 页 PPT<br>已提取页面文字，可继续用自然语言提出修改要求。';toast('PPTX 解析成功')}else throw new Error('empty')}catch(err){console.error(err);$('status').innerHTML='⚠️ 暂时无法解析该文件。请确认上传的是标准 .pptx 文件。';toast('PPTX 读取失败')}}
+$('drop').ondragover=e=>{e.preventDefault();$('drop').style.background='#f0f1ff'};$('drop').ondragleave=()=>{$('drop').style.background=''};$('drop').ondrop=async e=>{e.preventDefault();$('drop').style.background='';const f=e.dataTransfer.files[0];if(f) await inspectPptx(f)};
 </script>
 </body></html>
