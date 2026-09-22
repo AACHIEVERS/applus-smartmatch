@@ -18,6 +18,9 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 .ai-command{display:flex;gap:8px;margin:12px 0}.ai-command input{flex:1;padding:12px;border:1px solid #d8deea;border-radius:12px;font-size:14px}.ai-command button{border:0;border-radius:12px;padding:0 16px;background:#111827;color:#fff;font-weight:700;cursor:pointer}</style>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script><style>
 .layout-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}.card{padding:18px;border:1px solid #e5e7ef;border-radius:14px;background:#fafaff;display:flex;flex-direction:column;gap:8px}.card b{font-size:12px;color:#5b5cf0}.card strong{font-size:16px}.card span{font-size:11px;color:#777}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}.two-col>div{padding:20px;border-radius:14px;background:#f6f7ff}.two-col p{font-size:14px!important;margin:8px 0!important}.timeline{display:flex;gap:8px;margin-top:30px}.timeline>div{flex:1;padding:18px 12px;border-top:3px solid #5b5cf0;background:#f7f7fb;border-radius:8px}.timeline b{display:block;font-size:12px;color:#5b5cf0}.timeline strong{display:block;margin-top:12px;font-size:13px}.fake-chart{height:180px;display:flex;align-items:end;gap:18px;margin:25px 20px 0}.fake-chart i{flex:1;max-width:70px;background:linear-gradient(180deg,#7c3aed,#d9d7ff);border-radius:8px 8px 0 0;position:relative;min-height:20px}.fake-chart i b{position:absolute;top:-20px;font-size:10px}.fake-chart i span{position:absolute;bottom:-22px;font-size:10px}.slide.layout-cover h2{font-size:42px}.slide.layout-cards h2,.slide.layout-two-column h2,.slide.layout-timeline h2,.slide.layout-chart h2{font-size:30px}.slide.layout-chart .tag{margin-bottom:2px}
+</style><style>
+.editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.editor-tools select,.editor-tools button{border:1px solid #dfe2ea;background:#fff;border-radius:9px;padding:8px 10px;font-size:12px}.history{display:flex;gap:6px}.history button{min-width:38px}
+.element-controls{position:absolute;right:18px;top:18px;display:flex;gap:6px}.element-controls button{border:1px solid #ddd;background:#fff;border-radius:8px;padding:5px 8px;font-size:11px}
 </style></head>
 <body>
 <div class="app">
@@ -27,7 +30,7 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 <main class="main">
 <div class="hero"><div><div class="eyebrow">AI PRESENTATION STUDIO</div><h1 id="title">AI 产品发布会</h1><p id="subtitle">用一句话创建、修改和美化你的 PPT</p></div><div><button class="btn" id="magic">✨ AI 美化</button></div></div>
 <section class="canvas"><article class="slide" id="slide"><span class="tag">2026 PRODUCT LAUNCH</span><div id="slideContent"><h2 id="slideTitle">让复杂内容，变成令人记住的演示。</h2><p id="slideText">SlideForge AI 帮你从主题到完整 PPT，一次完成结构、内容与视觉设计。上传已有 PPT，也可以直接让 AI 帮你修改。</p></div><div class="shape"></div></article></section>
-<section class="prompt"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" id="addSlide">＋ 新增页</button><button class="btn" id="dupSlide">复制当前页</button><button class="btn" id="delSlide">删除当前页</button><button class="btn" id="editSlide">编辑当前页</button></div><textarea id="prompt" placeholder="告诉 AI 你想做什么，例如：做一份 10 页的 AI 行业趋势 PPT，面向投资人，风格专业简洁……"></textarea><div class="prompt-row"><span class="hint">Enter 发送 · 支持中文自然语言指令</span><button class="btn purple" id="generate">✦ 生成 / 修改</button></div></section>
+<section class="prompt"><div class="editor-tools"><select id="theme"><option value="indigo">Indigo</option><option value="mono">极简黑白</option><option value="violet">紫色渐变</option><option value="warm">暖色商务</option></select><select id="fontSize"><option value="small">小标题</option><option value="normal" selected>标准</option><option value="large">大标题</option></select><div class="history"><button id="undo">↶ 撤销</button><button id="redo">↷ 重做</button></div><button id="up">↑ 上移</button><button id="down">↓ 下移</button></div><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" id="addSlide">＋ 新增页</button><button class="btn" id="dupSlide">复制当前页</button><button class="btn" id="delSlide">删除当前页</button><button class="btn" id="editSlide">编辑当前页</button></div><textarea id="prompt" placeholder="告诉 AI 你想做什么，例如：做一份 10 页的 AI 行业趋势 PPT，面向投资人，风格专业简洁……"></textarea><div class="prompt-row"><span class="hint">Enter 发送 · 支持中文自然语言指令</span><button class="btn purple" id="generate">✦ 生成 / 修改</button></div></section>
 </main>
 <aside class="right"><h3>上传已有 PPT</h3><label class="drop" id="drop"><strong>拖入 .pptx 文件</strong><span>或点击选择文件 · AI 将分析你的页面</span><input type="file" id="file" accept=".pptx,.ppt"></label><div class="status" id="status">✨ AI 工作台已就绪<br>你可以创建新 PPT，或上传现有 PPT 后进行修改。</div><div class="slides"><h3>页面</h3><div id="thumbs"></div></div></aside>
 </div></div>
@@ -41,8 +44,16 @@ const defaultSlides=[
 ['产品能力','创建、修改、美化，一站完成。','支持新建 PPT、上传已有 PPT、逐页修改、翻译、精简内容与视觉优化。'],
 ['下一步','准备好开始了吗？','输入你的主题，或者上传一个现有的 PPT，让 AI 直接开始工作。']
 ];
-let current=0, slides=[...defaultSlides];
-function render(){
+let current=0, slides=[...defaultSlides], undoStack=[], redoStack=[];
+function snapshot(){return JSON.stringify(slides)}
+function saveHistory(){undoStack.push(snapshot());if(undoStack.length>30)undoStack.shift();redoStack=[]}
+function restore(raw){slides=JSON.parse(raw);current=Math.max(0,Math.min(current,slides.length-1));render()}
+function themeApply(){
+ const t=$('theme').value;document.documentElement.style.setProperty('--accent',t==='violet'?'#7c3aed':t==='warm'?'#c26a2e':t==='mono'?'#202124':'#5b5cf0');
+ document.documentElement.style.setProperty('--accent2',t==='violet'?'#a855f7':t==='warm'?'#d97706':t==='mono'?'#555':'#7c3aed');
+ document.documentElement.style.setProperty('--soft',t==='violet'?'#f3e8ff':t==='warm'?'#fff1e6':t==='mono'?'#f1f1f1':'#eef0ff');
+}
+
   const s=slides[current]||['内容','未命名页面',''];
   const type=s[3]||((current===0)?'cover':'content');
   const content=$('slideContent'), slide=$('slide');
@@ -107,7 +118,7 @@ async function generate(){
   if(!p){toast('请先告诉我你想做什么');return}
   $('status').innerHTML='⚙️ 免费模式正在生成 PPT 结构…';
   await new Promise(r=>setTimeout(r,250));
-  slides=localGenerate(p);current=0;render();
+  saveHistory();slides=localGenerate(p);current=0;render();
   $('status').innerHTML='✅ 免费版已生成 '+slides.length+' 页<br>所有内容在浏览器本地处理，无需 AI API。';
   toast('PPT 草稿已生成');
 }
@@ -116,14 +127,20 @@ async function runCommand(){
   if(!p){toast('请输入修改指令');return}
   $('status').innerHTML='⚙️ 免费模式正在执行修改…';
   await new Promise(r=>setTimeout(r,180));
-  const msg=applyLocalCommand(p);render();
+  saveHistory();const msg=applyLocalCommand(p);render();
   $('status').innerHTML=msg+'<br>免费版无需连接 AI API。';
   toast(msg.replace(/^[^\\u4e00-\\u9fff]+/,''));
 }
-$('addSlide').onclick=()=>{slides.push(['新增页面','点击“编辑当前页”修改标题','在这里输入这一页的内容。']);current=slides.length-1;render();toast('已新增页面')};
-$('dupSlide').onclick=()=>{slides.splice(current+1,0,[...slides[current]]);current++;render();toast('已复制当前页')};
-$('delSlide').onclick=()=>{if(slides.length<=1){toast('至少保留一页');return}slides.splice(current,1);current=Math.max(0,current-1);render();toast('已删除当前页')};
-$('editSlide').onclick=()=>{const s=slides[current];const title=prompt('页面标题',s[1]);if(title===null)return;const body=prompt('页面正文',s[2]);if(body===null)return;s[1]=title.trim()||s[1];s[2]=body.trim()||s[2];render();toast('页面已更新')};
+$('undo').onclick=()=>{if(!undoStack.length){toast('没有可撤销的操作');return}redoStack.push(snapshot());restore(undoStack.pop());toast('已撤销')};
+$('redo').onclick=()=>{if(!redoStack.length){toast('没有可重做的操作');return}undoStack.push(snapshot());restore(redoStack.pop());toast('已重做')};
+$('up').onclick=()=>{if(current<=0)return;saveHistory();[slides[current-1],slides[current]]=[slides[current],slides[current-1]];current--;render();toast('页面已上移')};
+$('down').onclick=()=>{if(current>=slides.length-1)return;saveHistory();[slides[current+1],slides[current]]=[slides[current],slides[current+1]];current++;render();toast('页面已下移')};
+$('theme').onchange=()=>{themeApply();render();toast('主题已切换')};
+$('fontSize').onchange=()=>{const v=$('fontSize').value;$('slide').style.setProperty('--title-scale',v==='large'?'1.18':v==='small'?'.86':'1');$('slide').querySelector('h2').style.transform='scale(var(--title-scale,1))';toast('字号已调整')};
+$('addSlide').onclick=()=>{saveHistory();slides.push(['新增页面','点击“编辑当前页”修改标题','在这里输入这一页的内容。']);current=slides.length-1;render();toast('已新增页面')};
+$('dupSlide').onclick=()=>{saveHistory();slides.splice(current+1,0,[...slides[current]]);current++;render();toast('已复制当前页')};
+$('delSlide').onclick=()=>{if(slides.length<=1){toast('至少保留一页');return}saveHistory();slides.splice(current,1);current=Math.max(0,current-1);render();toast('已删除当前页')};
+$('editSlide').onclick=()=>{const s=slides[current];const title=prompt('页面标题',s[1]);if(title===null)return;const body=prompt('页面正文',s[2]);if(body===null)return;saveHistory();s[1]=title.trim()||s[1];s[2]=body.trim()||s[2];render();toast('页面已更新')};
 $('generate').onclick=generate;$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generate()}});
 $('magic').onclick=()=>{slides.forEach((s,i)=>{if(i>0)s[2]=s[2].replace(/。?$/,'。');});$('slide').style.filter='saturate(1.15) contrast(1.03)';toast('已应用免费智能美化')};
 $('newBtn').onclick=()=>{slides=[...defaultSlides];current=0;$('prompt').value='';render();toast('已新建 PPT')};
