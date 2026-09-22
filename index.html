@@ -19,19 +19,19 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script></head>
 <body>
 <div class="app">
-<header class="top"><div class="brand"><div class="logo">✦</div>SlideForge AI</div><div class="top-actions"><button class="btn" id="preview">预览</button><button class="btn" id="save">保存</button><button class="btn primary" id="download">导出 PPTX</button></div></header>
+<header class="top"><div class="brand"><div class="logo">✦</div>SlideForge AI</div><div class="top-actions"><button class="btn" id="preview">预览</button><button class="btn" id="save">保存到本机</button><button class="btn primary" id="download">导出 PPTX</button></div></header>
 <div class="layout">
 <aside class="sidebar"><button class="new" id="newBtn">＋ 新建 AI PPT</button><div class="side-title">工作台</div><nav class="nav"><button class="active">✦ AI 创作</button><button>▣ 我的项目</button><button>◈ 模板中心</button><button>↺ 历史版本</button></nav><div class="projects"><div class="side-title">最近项目</div><div class="project">AI 产品发布会 <span>⋯</span></div><div class="project">公司年度报告 <span>⋯</span></div><div class="project">市场分析 2026 <span>⋯</span></div></div></aside>
 <main class="main">
 <div class="hero"><div><div class="eyebrow">AI PRESENTATION STUDIO</div><h1 id="title">AI 产品发布会</h1><p id="subtitle">用一句话创建、修改和美化你的 PPT</p></div><div><button class="btn" id="magic">✨ AI 美化</button></div></div>
 <section class="canvas"><article class="slide" id="slide"><span class="tag">2026 PRODUCT LAUNCH</span><h2 id="slideTitle">让复杂内容，变成令人记住的演示。</h2><p id="slideText">SlideForge AI 帮你从主题到完整 PPT，一次完成结构、内容与视觉设计。上传已有 PPT，也可以直接让 AI 帮你修改。</p><div class="shape"></div></article></section>
-<section class="prompt"><textarea id="prompt" placeholder="告诉 AI 你想做什么，例如：做一份 10 页的 AI 行业趋势 PPT，面向投资人，风格专业简洁……"></textarea><div class="prompt-row"><span class="hint">Enter 发送 · 支持中文自然语言指令</span><button class="btn purple" id="generate">✦ 生成 / 修改</button></div></section>
+<section class="prompt"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="btn" id="addSlide">＋ 新增页</button><button class="btn" id="dupSlide">复制当前页</button><button class="btn" id="delSlide">删除当前页</button><button class="btn" id="editSlide">编辑当前页</button></div><textarea id="prompt" placeholder="告诉 AI 你想做什么，例如：做一份 10 页的 AI 行业趋势 PPT，面向投资人，风格专业简洁……"></textarea><div class="prompt-row"><span class="hint">Enter 发送 · 支持中文自然语言指令</span><button class="btn purple" id="generate">✦ 生成 / 修改</button></div></section>
 </main>
 <aside class="right"><h3>上传已有 PPT</h3><label class="drop" id="drop"><strong>拖入 .pptx 文件</strong><span>或点击选择文件 · AI 将分析你的页面</span><input type="file" id="file" accept=".pptx,.ppt"></label><div class="status" id="status">✨ AI 工作台已就绪<br>你可以创建新 PPT，或上传现有 PPT 后进行修改。</div><div class="slides"><h3>页面</h3><div id="thumbs"></div></div></aside>
 </div></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div><div id="previewModal" style="display:none;position:fixed;inset:0;background:rgba(10,12,20,.72);z-index:30;padding:5vh 5vw"><div style="height:90vh;background:#f1f2f6;border-radius:18px;padding:30px;display:grid;place-items:center;position:relative"><button id="closePreview" class="btn" style="position:absolute;right:18px;top:18px">关闭</button><div id="previewSlide" class="slide" style="width:min(1100px,90%);"></div></div></div>
 <script>
-const $=id=>document.getElementById(id), toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)};
+const $=id=>document.getElementById(id), escapeHtml=s=>String(s).replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m])), toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)};
 const defaultSlides=[
 ['封面','让复杂内容，变成令人记住的演示。','SlideForge AI 帮你从主题到完整 PPT，一次完成结构、内容与视觉设计。'],
 ['问题与机会','信息很多，但表达可以更简单。','把零散资料、观点和数据组织成清晰的故事线，让观众更快理解重点。'],
@@ -92,11 +92,15 @@ async function runCommand(){
   $('status').innerHTML=msg+'<br>免费版无需连接 AI API。';
   toast(msg.replace(/^[^\\u4e00-\\u9fff]+/,''));
 }
+$('addSlide').onclick=()=>{slides.push(['新增页面','点击“编辑当前页”修改标题','在这里输入这一页的内容。']);current=slides.length-1;render();toast('已新增页面')};
+$('dupSlide').onclick=()=>{slides.splice(current+1,0,[...slides[current]]);current++;render();toast('已复制当前页')};
+$('delSlide').onclick=()=>{if(slides.length<=1){toast('至少保留一页');return}slides.splice(current,1);current=Math.max(0,current-1);render();toast('已删除当前页')};
+$('editSlide').onclick=()=>{const s=slides[current];const title=prompt('页面标题',s[1]);if(title===null)return;const body=prompt('页面正文',s[2]);if(body===null)return;s[1]=title.trim()||s[1];s[2]=body.trim()||s[2];render();toast('页面已更新')};
 $('generate').onclick=generate;$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generate()}});
-$('magic').onclick=()=>{ $('slide').style.filter='saturate(1.15) contrast(1.03)';toast('AI 已应用视觉美化')};
+$('magic').onclick=()=>{slides.forEach((s,i)=>{if(i>0)s[2]=s[2].replace(/。?$/,'。');});$('slide').style.filter='saturate(1.15) contrast(1.03)';toast('已应用免费智能美化')};
 $('newBtn').onclick=()=>{slides=[...defaultSlides];current=0;$('prompt').value='';render();toast('已新建 PPT')};
-$('save').onclick=()=>toast('项目已保存（演示版）');
-$('preview').onclick=()=>toast('预览模式已打开');
+$('save').onclick=()=>{localStorage.setItem('slideforge-project',JSON.stringify({slides,title:$('title').textContent}));toast('已保存到本机浏览器')};
+$('preview').onclick=()=>{const s=slides[current];$('previewSlide').innerHTML='<span class="tag">SLIDE '+String(current+1).padStart(2,'0')+'</span><h2>'+escapeHtml(s[1])+'</h2><p>'+escapeHtml(s[2])+'</p><div class="shape"></div>';$('previewModal').style.display='block'};$('closePreview').onclick=()=>{$('previewModal').style.display='none'};
 $('download').onclick=async()=>{try{const pptx=new pptxgen();pptx.layout='LAYOUT_WIDE';pptx.author='SlideForge AI';pptx.subject='AI generated presentation';pptx.title=$('title').textContent;slides.forEach((s,i)=>{const sl=pptx.addSlide();sl.background={color:'FFFFFF'};sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:'5B5CF0'},line:{color:'5B5CF0'}});sl.addText(s[0],{x:.7,y:.55,w:11.8,h:.35,fontSize:12,bold:true,color:'5B5CF0'});sl.addText(s[1],{x:.7,y:1.35,w:11.8,h:1.25,fontSize:28,bold:true,color:'17181C',margin:0,fit:'shrink'});sl.addText(s[2],{x:.7,y:2.9,w:10.8,h:1.2,fontSize:16,color:'60636C',fit:'shrink'});sl.addText(String(i+1).padStart(2,'0'),{x:11.8,y:6.8,w:.6,h:.25,fontSize:9,color:'A0A3AD',align:'right'});});await pptx.writeFile({fileName:'SlideForge-AI.pptx'});toast('PPTX 已生成并下载');}catch(e){console.error(e);toast('导出失败，请稍后重试')}};
 $('file').onchange=async e=>{const f=e.target.files[0];if(f) await inspectPptx(f)};
 async function inspectPptx(f){$('status').innerHTML='⏳ 正在读取 PPTX…';try{if(!/\.pptx$/i.test(f.name))throw new Error('format');const zip=await JSZip.loadAsync(await f.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>(parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])));const parsed=[];for(let i=0;i<names.length;i++){const xml=await zip.file(names[i]).async('string');const text=[...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');parsed.push(['第 '+(i+1)+' 页',text||'（未提取到文字）','AI 已读取这一页的文字内容，可以继续输入修改指令。']);}if(parsed.length){slides=parsed;current=0;render();$('status').innerHTML='✅ 已解析 '+parsed.length+' 页 PPT<br>已提取页面文字，可继续用自然语言提出修改要求。';toast('PPTX 解析成功')}else throw new Error('empty')}catch(err){console.error(err);$('status').innerHTML='⚠️ 暂时无法解析该文件。请确认上传的是标准 .pptx 文件。';toast('PPTX 读取失败')}}
