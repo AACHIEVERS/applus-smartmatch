@@ -24,6 +24,8 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 </style><style>
 .slide .image-placeholder{margin-top:18px;height:110px;border:2px dashed #cfd2df;border-radius:12px;display:grid;place-items:center;color:#8a8d98;font-size:12px;background:#fafaff}
 .slide .metric-row{display:flex;gap:12px;margin-top:20px}.metric{flex:1;padding:14px;border-radius:12px;background:#f6f7ff}.metric b{display:block;font-size:24px}.metric span{font-size:11px;color:#777}
+</style><style>
+.image-element{position:relative;margin:16px auto;width:78%;min-height:120px;border-radius:14px;overflow:hidden;border:1px solid #ddd;background:#f5f5f8}.image-element img{display:block;width:100%;max-height:240px;object-fit:contain}.image-element button{position:absolute;right:8px;top:8px;border:0;border-radius:8px;padding:5px 8px;background:#fff;box-shadow:0 2px 8px #0002;cursor:pointer}
 </style></head>
 <body>
 <div class="app">
@@ -78,6 +80,7 @@ function themeApply(){
     const p=document.createElement('p');p.id='slideText';p.textContent=s[2]||'';content.appendChild(p);
   }
   if(type==='content'){const img=document.createElement('div');img.className='image-placeholder';img.innerHTML='🖼️ 图片区域 · 可在下一步接入本地图片';content.appendChild(img)}
+  if(s[5]&&s[5].image){const box=document.createElement('div');box.className='image-element';const im=document.createElement('img');im.src=s[5].image;box.appendChild(im);const rm=document.createElement('button');rm.textContent='删除图片';rm.onclick=(e)=>{e.stopPropagation();saveHistory();slides[current][5].image=null;render();toast('图片已删除')};box.appendChild(rm);content.appendChild(box)}
   if(type==='two-column'){
     const cols=document.createElement('div');cols.className='two-col';cols.innerHTML='<div><b>核心观点</b><p>'+escapeHtml(s[2]||'')+'</p></div><div><b>关键结论</b><p>用一句话提炼最值得记住的信息。</p></div>';content.appendChild(cols);
   }
@@ -156,4 +159,24 @@ $('file').onchange=async e=>{const f=e.target.files[0];if(f) await inspectPptx(f
 async function inspectPptx(f){$('status').innerHTML='⏳ 正在读取 PPTX 并分析页面结构…';try{if(!/\.pptx$/i.test(f.name))throw new Error('format');const zip=await JSZip.loadAsync(await f.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>(parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])));const parsed=[];for(let i=0;i<names.length;i++){const xml=await zip.file(names[i]).async('string');const text=[...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');parsed.push(['第 '+(i+1)+' 页',text||'（未提取到文字）','AI 已读取这一页的文字内容，可以继续输入修改指令。','content']);}if(parsed.length){slides=parsed;current=0;render();$('status').innerHTML='✅ 已解析 '+parsed.length+' 页 PPT<br>已提取页面文字，可继续用自然语言提出修改要求。';toast('PPTX 解析成功')}else throw new Error('empty')}catch(err){console.error(err);$('status').innerHTML='⚠️ 暂时无法解析该文件。请确认上传的是标准 .pptx 文件。';toast('PPTX 读取失败')}}
 $('drop').ondragover=e=>{e.preventDefault();$('drop').style.background='#f0f1ff'};$('drop').ondragleave=()=>{$('drop').style.background=''};$('drop').ondrop=async e=>{e.preventDefault();$('drop').style.background='';const f=e.dataTransfer.files[0];if(f) await inspectPptx(f)};
 </script>
-</body></html>
+<script>
+(function(){
+const imageBtn=document.getElementById('imageBtn'),imageInput=document.getElementById('imageInput');
+if(imageBtn&&imageInput){
+ imageBtn.onclick=()=>imageInput.click();
+ imageInput.onchange=()=>{
+  const f=imageInput.files&&imageInput.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+   const s=slides[current]||['图片页','', ''];
+   const title=s[0]||'图片页';
+   const body=s[2]||'';
+   slides[current]=[title,s[1]||'',body,'content',[],{image:reader.result}];
+   saveHistory(); render(); toast('图片已插入当前页面');
+  };
+  reader.readAsDataURL(f);
+ };
+}
+const oldRender=window.render;
+})();
+</script></body></html>
