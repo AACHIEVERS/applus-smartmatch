@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SlideForge AI — AI PPT 工作台</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--text:#17181c;--muted:#737783;--line:#e7e8ed;--accent:#5b5cf0;--accent2:#7c3aed;--soft:#eef0ff;--shadow:0 12px 40px rgba(28,30,55,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;display:grid;grid-template-rows:64px 1fr}
+.top{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}.logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#5b5cf0,#8b5cf6);display:grid;place-items:center;color:#fff;font-size:16px}.top-actions{display:flex;gap:10px;align-items:center}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:650}.btn.primary{background:var(--text);color:#fff;border-color:var(--text)}.btn.purple{background:var(--accent);color:#fff;border-color:var(--accent)}.btn:hover{transform:translateY(-1px)}
+.layout{display:grid;grid-template-columns:260px minmax(520px,1fr) 310px;min-height:calc(100vh - 64px)}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:20px 14px}.side-title{font-size:12px;color:var(--muted);font-weight:700;padding:10px}.nav{display:flex;flex-direction:column;gap:4px}.nav button{border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;color:#484b55}.nav button.active{background:var(--soft);color:var(--accent);font-weight:700}.new{margin:8px 10px 20px;width:calc(100% - 20px);padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:700}.projects{margin-top:18px}.project{padding:10px;border-radius:9px;font-size:13px;display:flex;justify-content:space-between}.project:hover{background:#f5f5f8}
+.main{padding:30px;overflow:auto}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}.eyebrow{font-size:12px;color:var(--accent);font-weight:800;letter-spacing:.08em}.hero h1{font-size:30px;margin:5px 0}.hero p{color:var(--muted);margin:0}.canvas{background:#dfe1e8;border:1px solid #d4d6df;border-radius:14px;padding:28px;min-height:560px;display:grid;place-items:center;box-shadow:inset 0 1px #fff}.slide{width:min(820px,92%);aspect-ratio:16/9;background:#fff;border-radius:6px;box-shadow:0 16px 45px rgba(0,0,0,.13);padding:48px;position:relative;overflow:hidden}.slide:before{content:"";position:absolute;inset:0 0 auto 0;height:7px;background:linear-gradient(90deg,#5b5cf0,#8b5cf6)}.slide .tag{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef0ff;color:#5355d9;font-size:11px;font-weight:800}.slide h2{font-size:38px;line-height:1.12;margin:20px 0 12px;max-width:650px}.slide p{font-size:17px;color:#60636c;max-width:600px;line-height:1.6}.slide .shape{position:absolute;width:190px;height:190px;border-radius:40px;background:linear-gradient(135deg,#eef0ff,#f4eaff);right:-35px;bottom:-50px;transform:rotate(18deg)}.prompt{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}textarea{width:100%;border:0;outline:0;resize:none;min-height:58px}.prompt-row{display:flex;justify-content:space-between;align-items:center}.hint{font-size:12px;color:var(--muted)}
+.right{background:#fff;border-left:1px solid var(--line);padding:20px;overflow:auto}.right h3{font-size:13px;margin:6px 0 12px}.drop{border:1.5px dashed #bfc2cf;border-radius:12px;padding:22px;text-align:center;background:#fafaff}.drop strong{display:block;margin-bottom:6px}.drop span{font-size:12px;color:var(--muted)}.drop input{display:none}.slides{margin-top:24px}.thumb{display:flex;gap:10px;align-items:center;padding:9px;border:1px solid transparent;border-radius:9px}.thumb.active{border-color:#cfd2ff;background:#f7f7ff}.mini{width:70px;aspect-ratio:16/9;background:#fff;border:1px solid #ddd;border-radius:4px;padding:7px;font-size:5px}.thumb div:last-child{font-size:12px}.status{margin-top:20px;padding:12px;border-radius:10px;background:#f5f6f9;font-size:12px;color:#626570}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#17181c;color:#fff;padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:1050px){.layout{grid-template-columns:210px 1fr}.right{display:none}}@media(max-width:720px){.layout{grid-template-columns:1fr}.sidebar{display:none}.main{padding:16px}.slide{padding:28px}.slide h2{font-size:27px}.canvas{padding:12px;min-height:390px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="brand"><div class="logo">✦</div>SlideForge AI</div><div class="top-actions"><button class="btn" id="preview">预览</button><button class="btn" id="save">保存</button><button class="btn primary" id="download">导出 PPTX</button></div></header>
+<div class="layout">
+<aside class="sidebar"><button class="new" id="newBtn">＋ 新建 AI PPT</button><div class="side-title">工作台</div><nav class="nav"><button class="active">✦ AI 创作</button><button>▣ 我的项目</button><button>◈ 模板中心</button><button>↺ 历史版本</button></nav><div class="projects"><div class="side-title">最近项目</div><div class="project">AI 产品发布会 <span>⋯</span></div><div class="project">公司年度报告 <span>⋯</span></div><div class="project">市场分析 2026 <span>⋯</span></div></div></aside>
+<main class="main">
+<div class="hero"><div><div class="eyebrow">AI PRESENTATION STUDIO</div><h1 id="title">AI 产品发布会</h1><p id="subtitle">用一句话创建、修改和美化你的 PPT</p></div><div><button class="btn" id="magic">✨ AI 美化</button></div></div>
+<section class="canvas"><article class="slide" id="slide"><span class="tag">2026 PRODUCT LAUNCH</span><h2 id="slideTitle">让复杂内容，变成令人记住的演示。</h2><p id="slideText">SlideForge AI 帮你从主题到完整 PPT，一次完成结构、内容与视觉设计。上传已有 PPT，也可以直接让 AI 帮你修改。</p><div class="shape"></div></article></section>
+<section class="prompt"><textarea id="prompt" placeholder="告诉 AI 你想做什么，例如：做一份 10 页的 AI 行业趋势 PPT，面向投资人，风格专业简洁……"></textarea><div class="prompt-row"><span class="hint">Enter 发送 · 支持中文自然语言指令</span><button class="btn purple" id="generate">✦ 生成 / 修改</button></div></section>
+</main>
+<aside class="right"><h3>上传已有 PPT</h3><label class="drop" id="drop"><strong>拖入 .pptx 文件</strong><span>或点击选择文件 · AI 将分析你的页面</span><input type="file" id="file" accept=".pptx,.ppt"></label><div class="status" id="status">✨ AI 工作台已就绪<br>你可以创建新 PPT，或上传现有 PPT 后进行修改。</div><div class="slides"><h3>页面</h3><div id="thumbs"></div></div></aside>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=id=>document.getElementById(id), toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)};
+const defaultSlides=[
+['封面','让复杂内容，变成令人记住的演示。','SlideForge AI 帮你从主题到完整 PPT，一次完成结构、内容与视觉设计。'],
+['问题与机会','信息很多，但表达可以更简单。','把零散资料、观点和数据组织成清晰的故事线，让观众更快理解重点。'],
+['解决方案','AI 帮你完成从大纲到视觉。','输入主题，AI 自动生成结构、内容、版式，并根据你的反馈持续修改。'],
+['产品能力','创建、修改、美化，一站完成。','支持新建 PPT、上传已有 PPT、逐页修改、翻译、精简内容与视觉优化。'],
+['下一步','准备好开始了吗？','输入你的主题，或者上传一个现有的 PPT，让 AI 直接开始工作。']
+];
+let current=0, slides=[...defaultSlides];
+function render(){const [a,b,c]=slides[current];$('slideTitle').textContent=b;$('slideText').textContent=c;$('title').textContent=a==='封面'?'AI 产品发布会':'AI 产品发布会 · '+a;const box=$('thumbs');box.innerHTML='';slides.forEach((s,i)=>{const d=document.createElement('div');d.className='thumb '+(i===current?'active':'');d.innerHTML='<div class="mini">'+s[1].slice(0,24)+'</div><div>'+(i+1)+'. '+s[0]+'</div>';d.onclick=()=>{current=i;render()};box.appendChild(d)})} render();
+function generate(){const p=$('prompt').value.trim();if(!p){toast('请先告诉 AI 你想做什么');return} $('status').innerHTML='⏳ AI 正在分析你的需求…';setTimeout(()=>{const topic=p.length>28?p.slice(0,28)+'…':p;slides=[['封面',topic,'这是根据你的需求生成的演示首页。接下来可以继续告诉 AI 调整内容、风格、页数或结构。'],['核心观点','把信息组织成清晰的故事线','AI 会围绕主题拆分关键观点、证据与结论，让每一页都有明确目的。'],['重点内容','用更少的文字表达更多信息','自动精简段落，提炼标题与要点，并为数据选择合适的视觉表达。'],['行动建议','下一步可以这样做','继续输入修改指令，AI 会根据你的反馈逐页迭代。']];current=0;render();$('status').innerHTML='✅ 已生成 4 页草稿<br>继续输入指令即可修改。';toast('AI 草稿已生成');},900)}
+$('generate').onclick=generate;$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generate()}});
+$('magic').onclick=()=>{ $('slide').style.filter='saturate(1.15) contrast(1.03)';toast('AI 已应用视觉美化')};
+$('newBtn').onclick=()=>{slides=[...defaultSlides];current=0;$('prompt').value='';render();toast('已新建 PPT')};
+$('save').onclick=()=>toast('项目已保存（演示版）');
+$('preview').onclick=()=>toast('预览模式已打开');
+$('download').onclick=()=>toast('PPTX 导出接口已预留，下一阶段接入真实生成引擎');
+$('file').onchange=e=>{const f=e.target.files[0];if(f){$('status').innerHTML='📎 已上传：<b>'+f.name+'</b><br>下一阶段将解析 PPTX 并允许 AI 逐页修改。';toast('已接收 PPT 文件')}}
+$('drop').ondragover=e=>{e.preventDefault();$('drop').style.background='#f0f1ff'};$('drop').ondragleave=()=>{$('drop').style.background=''};$('drop').ondrop=e=>{e.preventDefault();$('drop').style.background='';const f=e.dataTransfer.files[0];if(f){$('status').innerHTML='📎 已上传：<b>'+f.name+'</b><br>下一阶段将解析 PPTX 并允许 AI 逐页修改。';toast('已接收 PPT 文件')}};
+</script>
+</body></html>
