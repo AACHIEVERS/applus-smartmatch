@@ -21,6 +21,9 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 </style><style>
 .editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.editor-tools select,.editor-tools button{border:1px solid #dfe2ea;background:#fff;border-radius:9px;padding:8px 10px;font-size:12px}.history{display:flex;gap:6px}.history button{min-width:38px}
 .element-controls{position:absolute;right:18px;top:18px;display:flex;gap:6px}.element-controls button{border:1px solid #ddd;background:#fff;border-radius:8px;padding:5px 8px;font-size:11px}
+</style><style>
+.slide .image-placeholder{margin-top:18px;height:110px;border:2px dashed #cfd2df;border-radius:12px;display:grid;place-items:center;color:#8a8d98;font-size:12px;background:#fafaff}
+.slide .metric-row{display:flex;gap:12px;margin-top:20px}.metric{flex:1;padding:14px;border-radius:12px;background:#f6f7ff}.metric b{display:block;font-size:24px}.metric span{font-size:11px;color:#777}
 </style></head>
 <body>
 <div class="app">
@@ -69,10 +72,12 @@ function themeApply(){
   }else if(type==='timeline'){
     const tl=document.createElement('div');tl.className='timeline';(s[4]||['阶段一：规划','阶段二：执行','阶段三：复盘']).slice(0,4).forEach((x,i)=>{tl.innerHTML+='<div><b>'+String(i+1).padStart(2,'0')+'</b><strong>'+escapeHtml(x)+'</strong></div>'});content.appendChild(tl);
   }else if(type==='chart'){
+    const metrics=document.createElement('div');metrics.className='metric-row';['42%','68%','84%'].forEach((v,i)=>{metrics.innerHTML+='<div class="metric"><b>'+v+'</b><span>关键指标 '+(i+1)+'</span></div>'});content.appendChild(metrics);
     const chart=document.createElement('div');chart.className='fake-chart';[42,68,55,84,73].forEach((v,i)=>chart.innerHTML+='<i style="height:'+v+'%"><b>'+v+'</b><span>Q'+(i+1)+'</span></i>');content.appendChild(chart);
   }else{
     const p=document.createElement('p');p.id='slideText';p.textContent=s[2]||'';content.appendChild(p);
   }
+  if(type==='content'){const img=document.createElement('div');img.className='image-placeholder';img.innerHTML='🖼️ 图片区域 · 可在下一步接入本地图片';content.appendChild(img)}
   if(type==='two-column'){
     const cols=document.createElement('div');cols.className='two-col';cols.innerHTML='<div><b>核心观点</b><p>'+escapeHtml(s[2]||'')+'</p></div><div><b>关键结论</b><p>用一句话提炼最值得记住的信息。</p></div>';content.appendChild(cols);
   }
@@ -95,7 +100,7 @@ function localGenerate(p){
     ['实施计划','从想法到落地的行动路径','按阶段拆解任务、负责人和关键里程碑，方便执行与跟进。'],
     ['总结与下一步','让观众知道接下来做什么','提炼三项最重要的结论，并给出清晰、可执行的下一步。']
   ];
-  for(let i=1;i<n;i++){const s=sections[(i-1)%sections.length];const layouts=['two-column','cards','timeline','chart','content'];out.push([s[0],s[1],s[2],layouts[(i-1)%layouts.length],['目标与背景','核心价值','行动重点']])}
+  for(let i=1;i<n;i++){const s=sections[(i-1)%sections.length];const layouts=['two-column','cards','timeline','chart','content'];out.push([s[0],s[1],s[2],layouts[(i-1)%layouts.length],['目标与背景','核心价值','行动重点'],{metrics:['42%','68%','84%']}])}
   return out;
 }
 function applyLocalCommand(p){
@@ -146,9 +151,9 @@ $('magic').onclick=()=>{slides.forEach((s,i)=>{if(i>0)s[2]=s[2].replace(/。?$/,
 $('newBtn').onclick=()=>{slides=[...defaultSlides];current=0;$('prompt').value='';render();toast('已新建 PPT')};
 $('save').onclick=()=>{localStorage.setItem('slideforge-project',JSON.stringify({slides,title:$('title').textContent}));toast('已保存到本机浏览器')};
 $('preview').onclick=()=>{const s=slides[current];$('previewSlide').innerHTML='<span class="tag">SLIDE '+String(current+1).padStart(2,'0')+'</span><h2>'+escapeHtml(s[1])+'</h2><p>'+escapeHtml(s[2])+'</p><div class="shape"></div>';$('previewModal').style.display='block'};$('closePreview').onclick=()=>{$('previewModal').style.display='none'};
-$('download').onclick=async()=>{try{const pptx=new pptxgen();pptx.layout='LAYOUT_WIDE';pptx.author='SlideForge AI';pptx.subject='AI generated presentation';pptx.title=$('title').textContent;slides.forEach((s,i)=>{const sl=pptx.addSlide();sl.background={color:'FFFFFF'};sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:'5B5CF0'},line:{color:'5B5CF0'}});sl.addText(s[0],{x:.7,y:.55,w:11.8,h:.35,fontSize:12,bold:true,color:'5B5CF0'});sl.addText(s[1],{x:.7,y:1.35,w:11.8,h:1.25,fontSize:28,bold:true,color:'17181C',margin:0,fit:'shrink'});if(s[3]==='cards'){(s[4]||['重点一','重点二','重点三']).slice(0,3).forEach((x,j)=>{sl.addShape(pptx.ShapeType.roundRect,{x:.7+j*4.05,y:3.05,w:3.55,h:1.5,rectRadius:.08,fill:{color:'F7F7FB'},line:{color:'E5E7EF'}});sl.addText(x,{x:.95+j*4.05,y:3.35,w:3.05,h:.5,fontSize:15,bold:true,color:'17181C',fit:'shrink'})})}else if(s[3]==='chart'){[42,68,55,84,73].forEach((v,j)=>sl.addShape(pptx.ShapeType.rect,{x:1+j*2.15,y:6.0-v/25,w:1.15,h:v/25,fill:{color:'7C3AED'},line:{color:'7C3AED'}}))}else{sl.addText(s[2],{x:.7,y:2.9,w:10.8,h:1.2,fontSize:16,color:'60636C',fit:'shrink'})}sl.addText(String(i+1).padStart(2,'0'),{x:11.8,y:6.8,w:.6,h:.25,fontSize:9,color:'A0A3AD',align:'right'});});await pptx.writeFile({fileName:'SlideForge-AI.pptx'});toast('PPTX 已生成并下载');}catch(e){console.error(e);toast('导出失败，请稍后重试')}};
+$('download').onclick=async()=>{try{const pptx=new pptxgen();pptx.layout='LAYOUT_WIDE';pptx.author='SlideForge AI';pptx.subject='AI generated presentation';pptx.title=$('title').textContent;slides.forEach((s,i)=>{const sl=pptx.addSlide();sl.background={color:'FFFFFF'};sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:'5B5CF0'},line:{color:'5B5CF0'}});sl.addText(s[0],{x:.7,y:.55,w:11.8,h:.35,fontSize:12,bold:true,color:'5B5CF0'});sl.addText(s[1],{x:.7,y:1.35,w:11.8,h:1.25,fontSize:28,bold:true,color:'17181C',margin:0,fit:'shrink'});if(s[3]==='cards'){(s[4]||['重点一','重点二','重点三']).slice(0,3).forEach((x,j)=>{sl.addShape(pptx.ShapeType.roundRect,{x:.7+j*4.05,y:3.05,w:3.55,h:1.5,rectRadius:.08,fill:{color:'F7F7FB'},line:{color:'E5E7EF'}});sl.addText(x,{x:.95+j*4.05,y:3.35,w:3.05,h:.5,fontSize:15,bold:true,color:'17181C',fit:'shrink'})})}else if(s[3]==='chart'){[42,68,55,84,73].forEach((v,j)=>sl.addShape(pptx.ShapeType.rect,{x:1+j*2.15,y:6.0-v/25,w:1.15,h:v/25,fill:{color:'7C3AED'},line:{color:'7C3AED'}}))}else{sl.addText(s[2],{x:.7,y:2.9,w:10.8,h:1.2,fontSize:16,color:'60636C',fit:'shrink'})}sl.addNotes('SlideForge AI 免费版：第 '+(i+1)+' 页');sl.addText(String(i+1).padStart(2,'0'),{x:11.8,y:6.8,w:.6,h:.25,fontSize:9,color:'A0A3AD',align:'right'});});await pptx.writeFile({fileName:'SlideForge-AI.pptx'});toast('PPTX 已生成并下载');}catch(e){console.error(e);toast('导出失败，请稍后重试')}};
 $('file').onchange=async e=>{const f=e.target.files[0];if(f) await inspectPptx(f)};
-async function inspectPptx(f){$('status').innerHTML='⏳ 正在读取 PPTX…';try{if(!/\.pptx$/i.test(f.name))throw new Error('format');const zip=await JSZip.loadAsync(await f.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>(parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])));const parsed=[];for(let i=0;i<names.length;i++){const xml=await zip.file(names[i]).async('string');const text=[...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');parsed.push(['第 '+(i+1)+' 页',text||'（未提取到文字）','AI 已读取这一页的文字内容，可以继续输入修改指令。']);}if(parsed.length){slides=parsed;current=0;render();$('status').innerHTML='✅ 已解析 '+parsed.length+' 页 PPT<br>已提取页面文字，可继续用自然语言提出修改要求。';toast('PPTX 解析成功')}else throw new Error('empty')}catch(err){console.error(err);$('status').innerHTML='⚠️ 暂时无法解析该文件。请确认上传的是标准 .pptx 文件。';toast('PPTX 读取失败')}}
+async function inspectPptx(f){$('status').innerHTML='⏳ 正在读取 PPTX 并分析页面结构…';try{if(!/\.pptx$/i.test(f.name))throw new Error('format');const zip=await JSZip.loadAsync(await f.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a,b)=>(parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])));const parsed=[];for(let i=0;i<names.length;i++){const xml=await zip.file(names[i]).async('string');const text=[...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');parsed.push(['第 '+(i+1)+' 页',text||'（未提取到文字）','AI 已读取这一页的文字内容，可以继续输入修改指令。','content']);}if(parsed.length){slides=parsed;current=0;render();$('status').innerHTML='✅ 已解析 '+parsed.length+' 页 PPT<br>已提取页面文字，可继续用自然语言提出修改要求。';toast('PPTX 解析成功')}else throw new Error('empty')}catch(err){console.error(err);$('status').innerHTML='⚠️ 暂时无法解析该文件。请确认上传的是标准 .pptx 文件。';toast('PPTX 读取失败')}}
 $('drop').ondragover=e=>{e.preventDefault();$('drop').style.background='#f0f1ff'};$('drop').ondragleave=()=>{$('drop').style.background=''};$('drop').ondrop=async e=>{e.preventDefault();$('drop').style.background='';const f=e.dataTransfer.files[0];if(f) await inspectPptx(f)};
 </script>
 </body></html>
