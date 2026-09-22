@@ -29,8 +29,18 @@ button,input,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;d
 </style><style>
 .image-element{cursor:move;position:relative;resize:both}.image-element.selected{outline:2px solid #6366f1;outline-offset:3px}.image-element .resize-tip{position:absolute;left:8px;bottom:8px;padding:3px 6px;border-radius:6px;background:#fff9;font-size:10px}
 .element-editor{margin-top:10px;padding:10px;border:1px solid #e4e5ec;border-radius:10px;background:#fafaff}.element-editor input{width:100%;box-sizing:border-box;margin:5px 0;padding:7px;border:1px solid #ddd;border-radius:7px}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+#authGate{position:fixed;inset:0;background:#f6f7fb;z-index:100;display:grid;place-items:center;padding:24px}
+.auth-card{width:min(420px,100%);background:#fff;border:1px solid #e7e8ed;border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(28,30,55,.12)}
+.auth-card h2{margin:0 0 8px}.auth-card p{color:#737783;font-size:13px;line-height:1.5}.auth-card input{width:100%;padding:12px;border:1px solid #dfe2ea;border-radius:10px;margin:7px 0;box-sizing:border-box}.auth-card button{width:100%;padding:12px;border:0;border-radius:10px;background:#5b5cf0;color:#fff;font-weight:700;margin-top:8px}.auth-card .secondary{background:#fff;color:#17181c;border:1px solid #dfe2ea}.auth-msg{font-size:12px;margin-top:10px;min-height:18px;color:#737783}
 </style></head>
-<body>
+<body><div id="authGate" style="display:none"><div class="auth-card">
+<div class="brand" style="margin-bottom:16px"><div class="logo">✦</div>SlideForge AI</div>
+<h2>登录后使用工作台</h2><p>你的 PPT 项目和 AI 工作台受 Supabase Auth 保护。登录后才能进入应用。</p>
+<input id="authEmail" type="email" placeholder="邮箱">
+<input id="authPassword" type="password" placeholder="密码（至少 6 位）">
+<button id="authLogin">登录</button><button id="authSignup" class="secondary">注册账号</button>
+<div id="authMsg" class="auth-msg"></div></div></div>
 <div class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div>SlideForge AI</div><div class="top-actions"><button class="btn" id="preview">预览</button><button class="btn" id="save">保存到本机</button><button class="btn primary" id="download">导出 PPTX</button></div></header>
 <div class="layout">
@@ -226,5 +236,38 @@ if(b)b.onclick=()=>{const w=Number(document.getElementById('imgWidth').value);co
  }
  document.getElementById('analyzeBtn')?.addEventListener('click',analyze);
  document.getElementById('autoApplyBtn')?.addEventListener('click',apply);
+})();
+</script><script>
+(function(){
+const SUPABASE_URL='https://xndgplkeayyrtzqgphlj.supabase.co', SUPABASE_PUBLISHABLE_KEY='sb_publishable_QQ_FVe4_XJA8vaLWg9FXPQ_PwamKnNa';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const gate=document.getElementById('authGate'),msg=document.getElementById('authMsg');
+function showGate(){gate.style.display='grid';document.querySelector('.app').style.display='none'}
+function showApp(){gate.style.display='none';document.querySelector('.app').style.display='grid'}
+async function refreshAuth(){
+ const {data:{session}}=await sb.auth.getSession();
+ if(session){showApp();addLogout(session.user)}else showGate();
+}
+function addLogout(user){
+ if(document.getElementById('logout'))return;
+ const btn=document.createElement('button');btn.id='logout';btn.className='btn';btn.textContent='退出登录';
+ btn.title=user?.email||'';btn.onclick=async()=>{await sb.auth.signOut();location.reload()};
+ document.querySelector('.top-actions').prepend(btn);
+}
+document.getElementById('authLogin').onclick=async()=>{
+ msg.textContent='正在登录…';
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ const {error}=await sb.auth.signInWithPassword({email,password});
+ if(error)msg.textContent=error.message;else location.reload();
+};
+document.getElementById('authSignup').onclick=async()=>{
+ msg.textContent='正在创建账号…';
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ const {data,error}=await sb.auth.signUp({email,password});
+ if(error){msg.textContent=error.message;return}
+ msg.textContent=data.session?'注册成功，正在进入…':'注册成功，请检查邮箱完成验证后再登录。';
+};
+sb.auth.onAuthStateChange((_event,session)=>{if(session)showApp();else showGate()});
+refreshAuth();
 })();
 </script></body></html>
