@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aachievers.github.io/applus-smartmatch/sitemap.xml
