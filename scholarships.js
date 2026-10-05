@@ -1,4 +1,4 @@
-const scholarships = [
+window.SCHOLARSHIPS = [
 {name:"NUS Global Merit Scholarship",provider:"National University of Singapore",levels:["University"],nationality:["Singapore Citizen"],field:"Multiple disciplines",award:"100% tuition + exchange + accommodation priority",deadline:"1 Feb–19 Mar 2026",source:"https://nus.edu.sg/oam/scholarships/scholarships-for-freshmen-singapore-citizens",verified:"2026-10-04"},
 {name:"NUS Merit Scholarship",provider:"National University of Singapore",levels:["University"],nationality:["Singapore Citizen"],field:"Multiple disciplines",award:"Tuition + exchange + accommodation priority",deadline:"1 Feb–19 Mar 2026",source:"https://nus.edu.sg/oam/scholarships/scholarships-for-freshmen-singapore-citizens",verified:"2026-10-04"},
 {name:"NUS Undergraduate Scholarship",provider:"National University of Singapore",levels:["University"],nationality:["Singapore Citizen"],field:"Multiple disciplines",award:"Tuition + exchange + accommodation priority",deadline:"1 Feb–19 Mar 2026",source:"https://nus.edu.sg/oam/scholarships/scholarships-for-freshmen-singapore-citizens",verified:"2026-10-04"},
