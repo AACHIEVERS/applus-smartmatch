@@ -316,3 +316,4 @@ renderJourney();
 renderTasks();
 renderPortfolio();
 window.addEventListener("DOMContentLoaded",()=>initCloud());
+window.__smartmatchMedicineLoaded=true;
