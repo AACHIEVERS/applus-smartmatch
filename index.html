@@ -51,10 +51,16 @@
       <div>
         <span class="eyebrow">NEXT BEST ACTION</span>
         <h2 id="nextAction">Take responsibility for one meaningful project outcome.</h2>
-        <p>SmartMatch recommends one priority instead of a long activity list.</p>
+        <p id="nextActionMeta">SmartMatch recommends one priority instead of a long activity list.</p>
       </div>
       <button class="primary" id="startAction">Start</button>
     </div>
+
+    <section class="dna-section">
+      <div class="section-intro compact"><p class="kicker">SMARTMATCH INTERNAL MODEL</p><h2>Candidate DNA</h2><p>Development signals across the capabilities that matter to a strong medicine candidate. <b>These are not NUS Medicine weights or admission scores.</b></p></div>
+      <div class="dna-grid" id="dnaGrid"></div>
+      <div class="dna-foot"><span>Current → Target</span><span id="dnaSummary">Building your profile…</span></div>
+    </section>
 
     <div class="three-col">
       <article class="simple-card"><span class="number">01</span><h3>NUS requirements</h3><p>See the current admission route and your status.</p><button class="text-btn" data-page="nus">View requirements →</button></article>
@@ -90,9 +96,9 @@
     <div class="section-intro"><p class="kicker">ONE STEP AT A TIME</p><h1>My Plan</h1><p>Your plan changes as your record changes.</p></div>
     <article class="plan-focus">
       <span class="eyebrow">CURRENT DEVELOPMENT FOCUS</span>
-      <h2>Leadership</h2>
-      <div class="progress"><i style="width:58%"></i></div><div class="progress-meta"><span>58 current</span><span>70 target</span></div>
-      <p>You already have participation experience. The next development step is ownership.</p>
+      <h2 id="planFocusTitle">Leadership</h2>
+      <div class="progress"><i id="planProgress" style="width:58%"></i></div><div class="progress-meta"><span id="planCurrent">58 current</span><span id="planTarget">70 target</span></div>
+      <p id="planFocusReason">You already have participation experience. The next development step is ownership.</p>
     </article>
     <div class="plan-list">
       <div class="plan-item"><span>01</span><div><b>Take ownership of one project task</b><small>This month · 1–2 hours</small></div><button class="check" data-task="0">○</button></div>
@@ -100,7 +106,7 @@
       <div class="plan-item"><span>03</span><div><b>Add one piece of evidence</b><small>After completion</small></div><button class="check" data-task="2">○</button></div>
       <div class="plan-item"><span>04</span><div><b>Write a short reflection</b><small>After completion · 10 minutes</small></div><button class="check" data-task="3">○</button></div>
     </div>
-    <article class="recommendation"><span class="eyebrow">WHY THIS?</span><h3>Don't add another activity yet.</h3><p>Your science exposure is already developing well. Deepening an existing community experience is currently more valuable for your candidate development.</p></article>
+    <article class="recommendation" id="planRecommendation"><span class="eyebrow">WHY THIS?</span><h3>Don't add another activity yet.</h3><p>Your science exposure is already developing well. Deepening an existing community experience is currently more valuable for your candidate development.</p></article>
   </div>
 </section>
 
