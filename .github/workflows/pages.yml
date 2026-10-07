@@ -1,4 +1,4 @@
-name: Deploy ScholarSG to GitHub Pages
+name: Deploy SmartMatch Medicine Candidate OS to GitHub Pages
 on:
   push:
     branches: [main]
