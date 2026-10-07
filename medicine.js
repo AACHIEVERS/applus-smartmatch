@@ -127,7 +127,7 @@ function validUsername(username){
 }
 async function signIn(){
  const username=normalizeUsername(document.getElementById("authUsername").value),password=document.getElementById("authPassword").value;
- if(!validUsername(username))return setAuthMessage("Use 3–32 characters: letters, numbers, dot, dash or underscore.");
+ if(!validUsername(username))return setAuthMessage("Please enter the User ID and password provided by the administrator.");
  if(!password)return setAuthMessage("Enter your username and password.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Signing in…");
