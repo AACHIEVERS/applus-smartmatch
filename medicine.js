@@ -26,7 +26,6 @@ async function initCloud(){
  cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
  const {data}=await cloudClient.auth.getSession();
  currentUser=data.session?.user||null; updateAuthButton();
- handleAuthRedirect();
  cloudClient.auth.onAuthStateChange(async (event,session)=>{
    currentUser=session?.user||null; updateAuthButton();
    if(event==="SIGNED_IN" && currentUser){
