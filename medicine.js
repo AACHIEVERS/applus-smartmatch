@@ -30,7 +30,9 @@ async function initCloud(){
  if(!window.supabase)return;
  cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
  const {data}=await cloudClient.auth.getSession();
- currentUser=data.session?.user||null; updateAuthButton(); updateAdminButton();
+ currentUser=data.session?.user||null;
+ if(currentUser){ const refreshed=await cloudClient.auth.refreshSession(); currentUser=refreshed.data.session?.user||currentUser; }
+ updateAuthButton(); updateAdminButton();
  cloudClient.auth.onAuthStateChange(async (event,session)=>{
    currentUser=session?.user||null; updateAuthButton(); updateAdminButton();
    if(event==="SIGNED_IN" && currentUser){
@@ -181,12 +183,12 @@ document.getElementById("createUserBtn")?.addEventListener("click",async()=>{
  const password=document.getElementById("adminPassword").value;
  const name=document.getElementById("adminName").value.trim();
  const msg=document.getElementById("adminMessage");
- if(!username||!password){msg.textContent="Enter User ID and password.";return;}
+ if(!username||!password){msg.textContent="Enter email and password.";return;}
  msg.textContent="Creating user…";
  try{
-   const {data,error}=await cloudClient.functions.invoke("admin-create-user",{body:{username,password,name}});
+   const {data,error}=await cloudClient.functions.invoke("admin-create-user",{body:{email:username,password,name}});
    if(error||!data?.ok){msg.textContent=data?.error||"Unable to create user.";return;}
-   msg.textContent="User created successfully: "+data.user.username;
+   msg.textContent="User created successfully: "+data.user.email;
    document.getElementById("adminUsername").value="";
    document.getElementById("adminPassword").value="";
    document.getElementById("adminName").value="";
