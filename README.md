@@ -1,26 +1,43 @@
-# ScholarSG — Singapore Scholarship Index
+# SmartMatch Medicine Candidate OS
 
-ScholarSG is a static, official-source-first Singapore scholarship discovery site for students and families.
+SmartMatch Medicine Candidate OS helps students build a genuine, evidence-based medicine candidacy over time.
 
-## Features
-- Instant keyword search
-- Education, nationality and field filters
-- Deadline and name sorting
-- Transparent Smart Match scoring
-- Scholarship detail pages
-- Official provider links and verification dates
-- Responsive mobile layout
-- Custom 404, robots.txt and sitemap.xml
-- GitHub Pages deployment with GitHub Actions
-- No Vercel and no backend required
+## Product scope
+This repository is dedicated to **Medicine Candidate OS**.
 
-## Data quality
-Each record points to an official provider source and includes a verification date. Scholarship information can change, so users should confirm the latest eligibility, deadline, documents, award terms, renewal conditions and bond/service obligations on the provider site before applying.
+The product connects:
+- NUS Medicine requirements
+- Candidate development
+- Experiences and evidence
+- Reflection
+- Personal development plan
+- Portfolio readiness
+- FSA readiness
 
-## Local preview
-Serve the repository root with any static HTTP server and open `index.html`.
+## Core principle
+
+> Build the Candidate, Not Just the Application.
+
+SmartMatch is designed to help students develop real capability and keep an authentic record of what they did, what changed, what they learned, and what evidence supports it.
+
+## Current prototype
+
+The current static prototype includes:
+- My Medicine Journey
+- NUS Medicine admission map
+- My Journey / Experience Records
+- My Plan
+- My Portfolio
+- FSA practice
+
+The current browser demo uses local storage. A future production version can connect the same product model to Supabase for authentication, database storage, evidence files and row-level security.
+
+## Important
+
+Admission requirements can change. Always verify the latest information on the official NUS Medicine admissions pages before applying.
 
 ## Deployment
-Pushes to `main` are published through `.github/workflows/pages.yml` using GitHub Pages.
+
+The repository is configured for GitHub Pages.
 
 Repository: https://github.com/AACHIEVERS/applus-smartmatch
