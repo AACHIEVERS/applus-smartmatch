@@ -136,21 +136,6 @@ async function signIn(){
  setAuthMessage("Signed in. Your journey is syncing.",true);
  setAuthModal(false);
 }
-async function signUp(){
- const username=normalizeUsername(document.getElementById("authUsername").value),password=document.getElementById("authPassword").value;
- if(!validUsername(username))return setAuthMessage("Use 3–32 characters: letters, numbers, dot, dash or underscore.");
- if(password.length<6)return setAuthMessage("Use a password of at least 6 characters.");
- if(!cloudClient)return setAuthMessage("Account sync is still loading…");
- setAuthMessage("Creating account…");
- const {data,error}=await cloudClient.auth.signUp({email:usernameEmail(username),password,options:{data:{username}}});
- if(error)return setAuthMessage(/already registered/i.test(error.message)?"That username is already in use.":error.message);
- if(data.session){
-   setAuthMessage("Account created. You are signed in.",true);
-   setAuthModal(false);
- }else{
-   setAuthMessage("Account created. Email confirmation must be disabled in Supabase Auth for direct login.",true);
- }
-}
 function showPage(page){
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
  document.querySelector("#page-"+page).classList.add("active");
