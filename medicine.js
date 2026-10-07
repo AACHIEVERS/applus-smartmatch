@@ -168,7 +168,7 @@ function setAuthModal(open){
 document.getElementById("authBtn").addEventListener("click",async()=>{
  if(!cloudClient){setAuthMessage("Account sync is still loading…");return;}
  if(currentUser){
-   if(confirm("Sign out of SmartMatch?"))await cloudClient.auth.signOut();
+   window.location.href="candidate.html";
  }else{
    setAuthModal(true);
  }
