@@ -46,10 +46,23 @@ $("refreshBtn").addEventListener("click",loadUsers);
 $("signOutBtn").addEventListener("click",async()=>{await client.auth.signOut();location.href="index.html"});
 
 (async()=>{
- const user=await getAdminSession();
+ let user=await getAdminSession();
  hide("loadingView");
  if(!user){$("deniedMessage").textContent="Please sign in on the Medicine page first.";show("deniedView");return}
- if(user.app_metadata?.role!=="admin"){show("deniedView");return}
+
+ // One-time bootstrap is restricted server-side to the original administrator UID.
+ if(user.id==="a160669e-847e-45e6-99fb-e51f93f18705" && user.app_metadata?.role!=="admin"){
+   const {data,error}=await client.functions.invoke("admin-bootstrap",{body:{}});
+   if(error||!data?.ok){
+     $("deniedMessage").textContent=data?.error||"Administrator initialization failed.";
+     show("deniedView");
+     return;
+   }
+   await client.auth.refreshSession();
+   user=await getAdminSession();
+ }
+
+ if(user?.app_metadata?.role!=="admin"){show("deniedView");return}
  $("adminIdentity").textContent="Admin · "+(user.user_metadata?.username||user.email||"");
  show("adminView");
  await loadUsers();
