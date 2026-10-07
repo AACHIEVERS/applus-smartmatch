@@ -24,6 +24,28 @@
       setTimeout(function(){var first=document.querySelector("#planList .card, #planList .tasklist, #planList");if(first)first.scrollIntoView({behavior:"smooth",block:"center"});},120);
       return;
     }
+    var ae=e.target.closest&&e.target.closest("#addEvidence");
+    if(ae){
+      e.preventDefault();
+      var xs=window.__candidateExperiences||[];
+      if(window.openEvidenceFallback){window.openEvidenceFallback();return;}
+      if(!xs.length){alert("Please add a real experience first.");return;}
+      var opts=xs.map(function(x){return "<option value='"+String(x.id).replace(/'/g,"&#039;")+"'>"+String(x.title||"Experience").replace(/[&<>]/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[m]})+"</option>"}).join("");
+      var m=document.getElementById("modal"),body=document.getElementById("modalBody");
+      if(m&&body){
+        body.innerHTML="<h2>Add evidence</h2><label>Experience<select id='fbEvx'>"+opts+"</select></label><label>Evidence title<input id='fbEvt'></label><label>Type<input id='fbEvtype' placeholder='Report / certificate / presentation / feedback / impact data'></label><label>What does it prove?<textarea id='fbEvnotes'></textarea></label><button type='button' class='primary' id='fbSaveEvidence'>Save evidence</button>";
+        m.classList.add("open");
+        document.getElementById("fbSaveEvidence").onclick=async function(){
+          var db=window.__candidateDb;
+          var s=await db.auth.getSession(),u=s.data.session&&s.data.session.user;
+          if(!u){alert("Please sign in first.");return;}
+          var q=await db.from("evidence").insert({user_id:u.id,experience_id:document.getElementById("fbEvx").value,title:document.getElementById("fbEvt").value.trim(),evidence_type:document.getElementById("fbEvtype").value.trim()||"record",notes:document.getElementById("fbEvnotes").value.trim()});
+          if(q.error){alert(q.error.message);return;}
+          m.classList.remove("open");location.reload();
+        };
+      }
+      return;
+    }
     var so=e.target.closest&&e.target.closest("#signOut");
     if(so){
       e.preventDefault();
