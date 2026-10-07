@@ -24,7 +24,7 @@ function updateAdminButton(){
 }
 function updateAuthButton(){
  const b=document.getElementById("authBtn"); if(!b)return;
- b.textContent=currentUser ? (currentUser.user_metadata?.username||"Account") : "Sign in";
+ b.textContent=currentUser ? (currentUser.user_metadata?.display_name||currentUser.user_metadata?.name||currentUser.email||"Account") : "Sign in";
 }
 async function initCloud(){
  if(!window.supabase)return;
