@@ -118,7 +118,7 @@ async function signIn(){
  setAuthMessage("Signing in…");
  const {error}=await cloudClient.auth.signInWithPassword({email,password});
  setAuthMessage(error?error.message:"Signed in. Your journey is syncing.",!error);
- if(!error)document.getElementById("authModal").classList.remove("open");
+ if(!error)setAuthModal(false);
 }
 async function signUp(){
  const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
@@ -136,8 +136,23 @@ function showPage(page){
  window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll("[data-page]").forEach(x=>x.addEventListener("click",()=>showPage(x.dataset.page)));
-document.getElementById("authBtn").addEventListener("click",async()=>{if(!cloudClient)return; if(currentUser){if(confirm("Sign out of SmartMatch?"))await cloudClient.auth.signOut();}else{document.getElementById("authModal").classList.add("open");}});
-document.getElementById("closeAuth").addEventListener("click",()=>document.getElementById("authModal").classList.remove("open"));
+function setAuthModal(open){
+ const modal=document.getElementById("authModal");
+ if(!modal)return;
+ modal.classList.toggle("open",open);
+ modal.setAttribute("aria-hidden",String(!open));
+}
+document.getElementById("authBtn").addEventListener("click",async()=>{
+ if(!cloudClient){setAuthMessage("Account sync is still loading…");return;}
+ if(currentUser){
+   if(confirm("Sign out of SmartMatch?"))await cloudClient.auth.signOut();
+ }else{
+   setAuthModal(true);
+ }
+});
+document.getElementById("closeAuth").addEventListener("click",()=>setAuthModal(false));
+document.getElementById("authModal").addEventListener("click",e=>{if(e.target.id==="authModal")setAuthModal(false);});
+setAuthModal(false);
 document.getElementById("signInBtn").addEventListener("click",signIn);
 document.getElementById("signUpBtn").addEventListener("click",signUp);
 document.getElementById("resetDemo").addEventListener("click",()=>{if(confirm("Reset the demo record?")){localStorage.removeItem(STORE_KEY);location.reload();}});
