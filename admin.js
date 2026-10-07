@@ -29,15 +29,15 @@ async function loadUsers(){
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
 $("createBtn").addEventListener("click",async()=>{
- const username=$("username").value.trim().toLowerCase(),password=$("password").value,name=$("name").value.trim();
- if(!username||!password){message("Enter User ID and password.");return}
+ const email=$("email").value.trim().toLowerCase(),password=$("password").value,name=$("name").value.trim();
+ if(!email||!password){message("Enter email and password.");return}
  if(password.length<8){message("Password must be at least 8 characters.");return}
  $("createBtn").disabled=true;message("Creating user…");
  try{
-   const {data,error}=await client.functions.invoke("admin-create-user",{body:{username,password,name}});
+   const {data,error}=await client.functions.invoke("admin-create-user",{body:{email,password,name}});
    if(error||!data?.ok){message(data?.error||"Unable to create user.");return}
-   message("User created: "+data.user.username,true);
-   $("username").value="";$("password").value="";$("name").value="";
+   message("User created: "+data.user.email,true);
+   $("email").value="";$("password").value="";$("name").value="";
    await loadUsers();
  }catch(e){message("Unable to create user right now.")}
  finally{$("createBtn").disabled=false}
