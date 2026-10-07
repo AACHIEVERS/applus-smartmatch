@@ -76,7 +76,7 @@ async function migrateLocalExperiences(){
 }
 async function cloudSaveState(){
  if(!cloudClient||!currentUser||cloudBusy)return;
- const profile={user_id:currentUser.id,stage:document.getElementById("stageLabel")?.textContent||"Sec 4",target_programme:"NUS Medicine",current_focus:"Leadership",focus_score:Number(document.getElementById("focusScore")?.textContent||58),target_score:70,updated_at:new Date().toISOString()};
+ const candidate=computeCandidateState(); const next=getNextBestAction(candidate); const profile={user_id:currentUser.id,stage:document.getElementById("stageLabel")?.textContent||"Sec 4",target_programme:"NUS Medicine",current_focus:next.focus,focus_score:next.current,target_score:next.target,updated_at:new Date().toISOString()};
  const {error:pe}=await cloudClient.from("candidate_profiles").upsert(profile);
  if(pe){console.warn(pe);return;}
  for(const x of state.experiences){
@@ -87,12 +87,23 @@ async function cloudSaveState(){
      x.id=data.id;
      await cloudClient.from("evidence").delete().eq("experience_id",data.id).eq("user_id",currentUser.id);
      if((x.evidenceItems||[]).length) await cloudClient.from("evidence").insert(x.evidenceItems.map(v=>({user_id:currentUser.id,experience_id:data.id,evidence_type:"record",title:v})));
-     await cloudClient.from("reflections").upsert({user_id:currentUser.id,experience_id:data.id,learning:x.learning||"",what_changed:x.impact||""});
+     await cloudClient.from("reflections").delete().eq("experience_id",data.id).eq("user_id",currentUser.id); if(x.learning||x.impact) await cloudClient.from("reflections").insert({user_id:currentUser.id,experience_id:data.id,learning:x.learning||"",what_changed:x.impact||""});
    }
  }
  saveLocalOnly();
+ await syncSkillAssessments(candidate);
  await syncTasks();
 }
+async function syncSkillAssessments(candidate){
+ if(!cloudClient||!currentUser||!candidate)return;
+ try{
+   await cloudClient.from("skill_assessments").delete().eq("user_id",currentUser.id).eq("source","SmartMatch");
+   const rows=candidate.dimensions.map(d=>({user_id:currentUser.id,skill:d.name,current_score:d.current,target_score:d.target,trend:trendFor(d.name).startsWith("↑")?"developing":"building",source:"SmartMatch"}));
+   const {error}=await cloudClient.from("skill_assessments").insert(rows);
+   if(error)console.warn("Skill snapshot unavailable:",error.message);
+ }catch(err){console.warn("Skill snapshot unavailable:",err?.message||err);}
+}
+
 async function syncTasks(){
  if(!cloudClient||!currentUser)return;
  for(let i=0;i<state.tasks.length;i++){
