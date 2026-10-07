@@ -17,6 +17,11 @@ const SUPABASE_KEY="sb_publishable_QQ_FVe4_XJA8vaLWg9FXPQ_PwamKnNa";
 function setAuthMessage(message,ok=false){
  const el=document.getElementById("authMessage"); if(el){el.textContent=message;el.className="auth-message "+(ok?"ok":"");}
 }
+function updateAdminButton(){
+ const b=document.getElementById("adminBtn"); if(!b)return;
+ const isAdmin=Boolean(currentUser?.app_metadata?.role==="admin");
+ b.style.display=isAdmin?"inline-flex":"none";
+}
 function updateAuthButton(){
  const b=document.getElementById("authBtn"); if(!b)return;
  b.textContent=currentUser ? (currentUser.user_metadata?.username||"Account") : "Sign in";
@@ -25,9 +30,9 @@ async function initCloud(){
  if(!window.supabase)return;
  cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
  const {data}=await cloudClient.auth.getSession();
- currentUser=data.session?.user||null; updateAuthButton();
+ currentUser=data.session?.user||null; updateAuthButton(); updateAdminButton();
  cloudClient.auth.onAuthStateChange(async (event,session)=>{
-   currentUser=session?.user||null; updateAuthButton();
+   currentUser=session?.user||null; updateAuthButton(); updateAdminButton();
    if(event==="SIGNED_IN" && currentUser){
      setAuthMessage("Signed in — your journey is syncing.",true);
      setAuthModal(false);
@@ -167,6 +172,25 @@ document.getElementById("authBtn").addEventListener("click",async()=>{
 });
 document.getElementById("closeAuth").addEventListener("click",()=>setAuthModal(false));
 document.getElementById("authModal").addEventListener("click",e=>{if(e.target.id==="authModal")setAuthModal(false);});
+document.getElementById("adminBtn")?.addEventListener("click",()=>{document.getElementById("adminModal")?.classList.add("open");});
+document.getElementById("closeAdminModal")?.addEventListener("click",()=>document.getElementById("adminModal")?.classList.remove("open"));
+document.getElementById("adminModal")?.addEventListener("click",e=>{if(e.target.id==="adminModal")e.currentTarget.classList.remove("open");});
+document.getElementById("createUserBtn")?.addEventListener("click",async()=>{
+ const username=document.getElementById("adminUsername").value.trim().toLowerCase();
+ const password=document.getElementById("adminPassword").value;
+ const name=document.getElementById("adminName").value.trim();
+ const msg=document.getElementById("adminMessage");
+ if(!username||!password){msg.textContent="Enter User ID and password.";return;}
+ msg.textContent="Creating user…";
+ try{
+   const {data,error}=await cloudClient.functions.invoke("admin-create-user",{body:{username,password,name}});
+   if(error||!data?.ok){msg.textContent=data?.error||"Unable to create user.";return;}
+   msg.textContent="User created successfully: "+data.user.username;
+   document.getElementById("adminUsername").value="";
+   document.getElementById("adminPassword").value="";
+   document.getElementById("adminName").value="";
+ }catch(err){console.warn("Admin create user error:",err);msg.textContent="Unable to create user right now.";}
+});
 setAuthModal(false);
 document.getElementById("signInBtn").addEventListener("click",signIn);
 document.getElementById("resetDemo").addEventListener("click",()=>{if(confirm("Reset the demo record?")){localStorage.removeItem(STORE_KEY);location.reload();}});
