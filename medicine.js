@@ -42,7 +42,10 @@ async function loadCloudState(){
    ]);
    if(pe) throw pe; if(ee) throw ee;
    if(rows&&rows.length){
-     state.experiences=rows.map(x=>({id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],evidence:Boolean(x.evidence),reflection:Boolean(x.learning),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:x.impact||"",learning:x.learning||"",evidenceItems:[]}));
+     const ids=rows.map(x=>x.id);
+     const {data:evRows}=await cloudClient.from("evidence").select("experience_id,title,evidence_type").eq("user_id",currentUser.id).in("experience_id",ids);
+     if(evRows) rows.forEach(x=>{x._evidence=evRows.filter(e=>e.experience_id===x.id).map(e=>e.title||e.evidence_type);});
+     state.experiences=rows.map(x=>({id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],evidence:false,reflection:Boolean(x.learning),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:x.impact||"",learning:x.learning||"",evidenceItems:x._evidence||[],evidence:Boolean((x._evidence||[]).length)}));
      if(plans?.length) state.tasks=[0,1,2,3].map(i=>plans.find(p=>p.position===i+1)?.status==="done");
      saveLocalOnly();
      renderJourney();renderPortfolio();renderTasks();
@@ -80,7 +83,12 @@ async function cloudSaveState(){
    const payload={user_id:currentUser.id,year:x.year,title:x.title,role:x.role,duration:x.duration,description:x.description,impact:x.impact||"",learning:x.learning||"",skills:x.skills||[],portfolio_status:x.portfolio||"Supporting",lifecycle_status:x.learning&&x.evidence?"Reflected":"Active"};
    if(typeof x.id==="string"&&x.id.includes("-")) payload.id=x.id;
    const {data,error}=await cloudClient.from("experiences").upsert(payload).select().single();
-   if(!error&&data)x.id=data.id;
+   if(!error&&data){
+     x.id=data.id;
+     await cloudClient.from("evidence").delete().eq("experience_id",data.id).eq("user_id",currentUser.id);
+     if((x.evidenceItems||[]).length) await cloudClient.from("evidence").insert(x.evidenceItems.map(v=>({user_id:currentUser.id,experience_id:data.id,evidence_type:"record",title:v})));
+     await cloudClient.from("reflections").upsert({user_id:currentUser.id,experience_id:data.id,learning:x.learning||"",what_changed:x.impact||""});
+   }
  }
  saveLocalOnly();
  await syncTasks();
