@@ -9,7 +9,7 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="medicine.html"><span class="brand-mark">M</span><span>SmartMatch <small>Medicine</small></span></a>
+  <a class="brand" href="index.html"><span class="brand-mark">M</span><span>SmartMatch <small>Medicine</small></span></a>
   <nav>
     <button class="nav-btn active" data-page="home">Home</button>
     <button class="nav-btn" data-page="nus">NUS Medicine</button>
@@ -17,7 +17,7 @@
     <button class="nav-btn" data-page="plan">My Plan</button>
     <button class="nav-btn" data-page="portfolio">My Portfolio</button>
   </nav>
-  <button class="profile-btn" id="resetDemo">Demo</button>
+  <button class="profile-btn" id="authBtn">Sign in</button><button class="profile-btn" id="resetDemo">Demo</button>
 </header>
 
 <main>
@@ -114,7 +114,7 @@
 </section>
 </main>
 
-<div class="modal" id="modal" aria-hidden="true"><div class="modal-box"><button class="close" id="closeModal">×</button><div id="modalContent"></div></div></div>
-<script src="medicine.js"></script>
+<div class="auth-modal" id="authModal" aria-hidden="true"><div class="auth-box"><button class="close" id="closeAuth">×</button><span class="eyebrow">SMARTMATCH ACCOUNT</span><h2 id="authTitle">Save your journey</h2><p id="authHint">Sign in to sync your Medicine Candidate OS across devices.</p><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"></label><div class="auth-actions"><button class="primary" id="signInBtn">Sign in</button><button class="text-btn" id="signUpBtn">Create account</button></div><p class="auth-message" id="authMessage"></p></div></div>\n<div class="modal" id="modal" aria-hidden="true"><div class="modal-box"><button class="close" id="closeModal">×</button><div id="modalContent"></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="medicine.js"></script>
 </body>
 </html>
