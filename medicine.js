@@ -13,6 +13,7 @@ function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state)); cloudSave
 
 let cloudClient=null, currentUser=null, cloudReady=false, cloudBusy=false;
 const SUPABASE_URL="https://xndgplkeayyrtzqgphlj.supabase.co";
+const AUTH_REDIRECT_URL="https://aachievers.github.io/applus-smartmatch/";
 const SUPABASE_KEY="sb_publishable_QQ_FVe4_XJA8vaLWg9FXPQ_PwamKnNa";
 function setAuthMessage(message,ok=false){
  const el=document.getElementById("authMessage"); if(el){el.textContent=message;el.className="auth-message "+(ok?"ok":"");}
@@ -26,11 +27,29 @@ async function initCloud(){
  cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const {data}=await cloudClient.auth.getSession();
  currentUser=data.session?.user||null; updateAuthButton();
- cloudClient.auth.onAuthStateChange(async (_event,session)=>{
+ handleAuthRedirect();
+ cloudClient.auth.onAuthStateChange(async (event,session)=>{
    currentUser=session?.user||null; updateAuthButton();
-   if(currentUser) await loadCloudState();
+   if(event==="SIGNED_IN" && currentUser){
+     setAuthMessage("Email verified. You're signed in — your journey is syncing.",true);
+     setAuthModal(false);
+     await loadCloudState();
+   }else if(currentUser) await loadCloudState();
  });
  if(currentUser) await loadCloudState();
+}
+function handleAuthRedirect(){
+ const hash=window.location.hash||"";
+ if(!hash.includes("error=")&&!hash.includes("access_token=")&&!hash.includes("type="))return;
+ const params=new URLSearchParams(hash.replace(/^#/,""));
+ const errorCode=params.get("error_code");
+ const errorDescription=params.get("error_description");
+ if(errorCode||errorDescription){
+   if(errorCode==="otp_expired") setAuthMessage("This verification link has expired or was already used. Please request a new verification email.");
+   else setAuthMessage(errorDescription?decodeURIComponent(errorDescription.replace(/\+/g," ")): "Email verification could not be completed.");
+   setAuthModal(true);
+   history.replaceState(null,"",window.location.pathname+window.location.search);
+ }
 }
 async function loadCloudState(){
  if(!cloudClient||!currentUser||cloudBusy)return;
@@ -115,18 +134,40 @@ async function syncTasks(){
 async function signIn(){
  const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
  if(!email||!password)return setAuthMessage("Enter your email and password.");
+ if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Signing in…");
  const {error}=await cloudClient.auth.signInWithPassword({email,password});
- setAuthMessage(error?error.message:"Signed in. Your journey is syncing.",!error);
- if(!error)setAuthModal(false);
+ if(error){
+   const msg=String(error.message||"");
+   const friendly=/invalid login credentials|email not confirmed|email.*confirm|not.*verified/i.test(msg)
+     ?"Email not verified yet, or the email/password is incorrect. If you haven't verified your email, use “Resend verification” below."
+     :msg;
+   return setAuthMessage(friendly);
+ }
+ setAuthMessage("Signed in. Your journey is syncing.",true);
+ setAuthModal(false);
 }
 async function signUp(){
  const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
  if(!email||password.length<6)return setAuthMessage("Use an email and a password of at least 6 characters.");
+ if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Creating account…");
- const {data,error}=await cloudClient.auth.signUp({email,password});
+ const {data,error}=await cloudClient.auth.signUp({email,password,options:{emailRedirectTo:AUTH_REDIRECT_URL}});
  if(error)return setAuthMessage(error.message);
- setAuthMessage(data.session?"Account created and signed in.":"Account created. Check your email to confirm, then sign in.",true);
+ if(data.session){
+   setAuthMessage("Account created and you're signed in.",true);
+ }else{
+   setAuthMessage("Account created. Check your email, click the verification link, and you'll return here automatically.",true);
+ }
+}
+async function resendVerification(){
+ const email=document.getElementById("authEmail").value.trim();
+ if(!email)return setAuthMessage("Enter your email first.");
+ if(!cloudClient)return setAuthMessage("Account sync is still loading…");
+ setAuthMessage("Sending a new verification email…");
+ const {error}=await cloudClient.auth.resend({type:"signup",email,options:{emailRedirectTo:AUTH_REDIRECT_URL}});
+ if(error)return setAuthMessage(error.message);
+ setAuthMessage("New verification email sent. Check your inbox and use the newest link.",true);
 }
 
 function showPage(page){
@@ -155,6 +196,7 @@ document.getElementById("authModal").addEventListener("click",e=>{if(e.target.id
 setAuthModal(false);
 document.getElementById("signInBtn").addEventListener("click",signIn);
 document.getElementById("signUpBtn").addEventListener("click",signUp);
+document.getElementById("resendVerificationBtn").addEventListener("click",resendVerification);
 document.getElementById("resetDemo").addEventListener("click",()=>{if(confirm("Reset the demo record?")){localStorage.removeItem(STORE_KEY);location.reload();}});
 
 const requirements={
