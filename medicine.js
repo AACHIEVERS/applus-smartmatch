@@ -37,7 +37,7 @@ async function initCloud(){
    currentUser=session?.user||null; updateAuthButton(); updateAdminButton();
    if(event==="SIGNED_IN" && currentUser){
      setAuthMessage("Signed in — your journey is syncing.",true);
-     setAuthModal(false);
+     setAuthModal(false); window.location.href="candidate.html";
      await loadCloudState();
    }else if(currentUser) await loadCloudState();
  });
