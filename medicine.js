@@ -132,14 +132,14 @@ function validUsername(username){
 }
 async function signIn(){
  const raw=document.getElementById("authUsername").value.trim(),password=document.getElementById("authPassword").value;
- const username=raw.toLowerCase()==="admin" ? "ningken3@gmail.com" : raw.toLowerCase();
- if(!raw)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
- if(!password)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
+ const username=raw.toLowerCase();
+ if(!raw)return setAuthMessage("Please enter your email and password.");
+ if(!password)return setAuthMessage("Please enter your email and password.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Signing in…");
  try{
    const {data,error}=await cloudClient.functions.invoke("login-user",{body:{username,password}});
-   if(error||!data?.access_token||!data?.refresh_token)return setAuthMessage(data?.error||"Username or password is incorrect.");
+   if(error||!data?.access_token||!data?.refresh_token)return setAuthMessage(data?.error||"Email or password is incorrect.");
    const {error:sessionError}=await cloudClient.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
    if(sessionError)return setAuthMessage("Unable to start your session. Please try again.");
    await cloudClient.auth.refreshSession();
