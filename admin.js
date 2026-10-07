@@ -23,7 +23,7 @@ async function loadUsers(){
    if(error||!data?.ok){list.innerHTML='<div class="empty">Unable to load accounts.</div>';return}
    const users=data.users||[];
    if(!users.length){list.innerHTML='<div class="empty">No student accounts yet.</div>';return}
-   list.innerHTML=users.map(u=>'<div class="user-row"><div><strong>'+escapeHtml(u.username)+'</strong><span>'+escapeHtml(u.name||u.username)+'</span></div><span class="status">Active</span></div>').join("");
+   list.innerHTML=users.map(u=>'<div class="user-row"><div><strong>'+escapeHtml(u.email)+'</strong><span>'+escapeHtml(u.name||u.email)+'</span></div><span class="status">Active</span></div>').join("");
  }catch(e){list.innerHTML='<div class="empty">Unable to load accounts.</div>'}
 }
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
