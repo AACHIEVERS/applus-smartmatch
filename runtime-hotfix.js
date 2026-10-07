@@ -17,6 +17,13 @@
       var name=b.getAttribute("data-page")||b.getAttribute("data-go");
       if(name&&showPage(name)) e.preventDefault();
     }
+    var wa=e.target.closest&&e.target.closest("#weekAction");
+    if(wa){
+      e.preventDefault();
+      if(window.go) window.go("plan"); else showPage("plan");
+      setTimeout(function(){var first=document.querySelector("#planList .card, #planList .tasklist, #planList");if(first)first.scrollIntoView({behavior:"smooth",block:"center"});},120);
+      return;
+    }
     var so=e.target.closest&&e.target.closest("#signOut");
     if(so){
       e.preventDefault();
