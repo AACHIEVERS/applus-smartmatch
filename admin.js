@@ -8,8 +8,9 @@ function hide(id){$(id).hidden=true}
 function message(text,ok=false){$("createMessage").textContent=text;$("createMessage").className="message"+(ok?" ok":"")}
 
 async function getAdminSession(){
- const {data,error}=await client.auth.getSession();
- if(error||!data.session)return null;
+ const refreshed=await client.auth.refreshSession();
+ const session=refreshed.data.session;
+ if(refreshed.error||!session)return null;
  const {data:userData}=await client.auth.getUser();
  const user=userData?.user;
  if(!user)return null;
@@ -17,6 +18,7 @@ async function getAdminSession(){
 }
 
 async function loadUsers(){
+ await client.auth.refreshSession();
  const list=$("usersList");list.innerHTML='<div class="empty">Loading accounts…</div>';
  try{
    const {data,error}=await client.functions.invoke("admin-list-users",{body:{}});
@@ -34,6 +36,7 @@ $("createBtn").addEventListener("click",async()=>{
  if(password.length<8){message("Password must be at least 8 characters.");return}
  $("createBtn").disabled=true;message("Creating user…");
  try{
+   await client.auth.refreshSession();
    const {data,error}=await client.functions.invoke("admin-create-user",{body:{email,password,name}});
    if(error||!data?.ok){message(data?.error||"Unable to create user.");return}
    message("User created: "+data.user.email,true);
