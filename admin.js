@@ -63,7 +63,7 @@ $("signOutBtn").addEventListener("click",async()=>{await client.auth.signOut();l
  }
 
  if(user?.app_metadata?.role!=="admin"){show("deniedView");return}
- $("adminIdentity").textContent="Admin · "+(user.user_metadata?.username||user.email||"");
+ $("adminIdentity").textContent="Admin · "+(user.user_metadata?.display_name||user.user_metadata?.name||"Administrator");
  show("adminView");
  await loadUsers();
 })();
