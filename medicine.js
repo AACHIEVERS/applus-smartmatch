@@ -132,7 +132,7 @@ function validUsername(username){
 }
 async function signIn(){
  const raw=document.getElementById("authUsername").value.trim(),password=document.getElementById("authPassword").value;
- const username=raw.toLowerCase();
+ const username=raw.toLowerCase()==="admin" ? "ningken3@gmail.com" : raw.toLowerCase();
  if(!raw)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
  if(!password)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
