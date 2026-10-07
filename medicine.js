@@ -161,7 +161,6 @@ document.getElementById("closeAuth").addEventListener("click",()=>setAuthModal(f
 document.getElementById("authModal").addEventListener("click",e=>{if(e.target.id==="authModal")setAuthModal(false);});
 setAuthModal(false);
 document.getElementById("signInBtn").addEventListener("click",signIn);
-document.getElementById("signUpBtn").addEventListener("click",signUp);
 document.getElementById("resetDemo").addEventListener("click",()=>{if(confirm("Reset the demo record?")){localStorage.removeItem(STORE_KEY);location.reload();}});
 
 const requirements={
