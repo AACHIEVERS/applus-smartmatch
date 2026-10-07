@@ -136,6 +136,63 @@ const requirements={
  fsa:{title:"Focused Skills Assessment",status:"Developing",body:"FSA readiness is developed through real communication, teamwork, reasoning and reflection — not by memorising medical answers.",list:["Role-play","Task-based","Group","Interview","Current NUS guidance states that FSA does not test academic or medical knowledge."]},
  selection:{title:"Selection",status:"Final stage",body:"SmartMatch does not predict admission. It shows whether the student has completed the relevant preparation gates and whether the record is coherent and evidenced.",list:["Academic eligibility","Portfolio readiness","FSA capability","Application readiness"]}
 };
+// ---------- Candidate DNA / Gap Engine ----------
+const DNA_DIMENSIONS=[
+ {name:"Academic",target:75,aliases:["Academic"]},
+ {name:"Scientific Thinking",target:75,aliases:["Scientific Thinking","Research"]},
+ {name:"Medical Insight",target:65,aliases:["Medical Insight","Medicine"]},
+ {name:"Service",target:70,aliases:["Service","Community"]},
+ {name:"Leadership",target:70,aliases:["Leadership","Ownership"]},
+ {name:"Communication",target:70,aliases:["Communication","Debate"]},
+ {name:"Reasoning & Ethics",target:72,aliases:["Reasoning","Ethics"]},
+ {name:"Reflection & Character",target:70,aliases:["Reflection","Character"]}
+];
+const DNA_BASE={Academic:62,"Scientific Thinking":52,"Medical Insight":50,Service:52,Leadership:58,Communication:52,"Reasoning & Ethics":55,"Reflection & Character":55};
+function scoreDimension(d){
+ let score=DNA_BASE[d.name]||50;
+ const related=state.experiences.filter(x=>(x.skills||[]).some(s=>d.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
+ related.forEach(x=>{
+   score+=7;if(x.evidence)score+=3;if(x.reflection)score+=3;
+   const ownership=/lead|owner|coordinat|organis|manage|responsib|project/i.test((x.role||"")+" "+(x.description||""));
+   if(ownership&&(d.name==="Leadership"||d.name==="Service"))score+=4;
+   if(/research|science|biology|lab/i.test((x.title||"")+" "+(x.description||""))&&d.name==="Scientific Thinking")score+=4;
+   if(/debate|present|discuss|communicat/i.test((x.title||"")+" "+(x.description||""))&&d.name==="Communication")score+=3;
+ });
+ if(d.name==="Reflection & Character"){const reflected=state.experiences.filter(x=>x.learning).length;score+=Math.min(12,reflected*4);}
+ return Math.max(0,Math.min(95,Math.round(score)));
+}
+function computeCandidateState(){
+ const dimensions=DNA_DIMENSIONS.map(d=>({...d,current:scoreDimension(d)}));
+ const gaps=dimensions.map(d=>({...d,gap:Math.max(0,d.target-d.current)})).sort((a,b)=>b.gap-a.gap);
+ return {dimensions,gaps};
+}
+function trendFor(name){
+ const xs=state.experiences.filter(x=>(x.skills||[]).some(s=>String(s).toLowerCase().includes(name.split(" ")[0].toLowerCase())));
+ if(!xs.length)return "→ Building";
+ return xs.filter(x=>x.evidence).length+xs.filter(x=>x.reflection).length>=2?"↑ Stronger":"↑ Developing";
+}
+function getNextBestAction(candidate){
+ const gap=candidate.gaps[0];
+ const related=state.experiences.filter(x=>(x.skills||[]).some(s=>gap.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
+ const deepen=related.find(x=>x.portfolio!=="Strong"||!x.evidence||!x.reflection)||related[0];
+ if(deepen)return {focus:gap.name,current:gap.current,target:gap.target,gap:gap.gap,action:gap.name==="Leadership"?"Take ownership of one meaningful outcome in "+deepen.title+".":"Deepen your role in "+deepen.title+" and record what changed.",reason:"You already have a real "+gap.name.toLowerCase()+" signal. Depth is more valuable now than starting another similar activity.",whyNow:"Your current "+gap.name.toLowerCase()+" signal is "+gap.current+", with a "+gap.gap+"-point development gap.",whyNot:"Adding another activity may repeat what you already have without increasing ownership, evidence or reflection.",experience:deepen.title};
+ return {focus:gap.name,current:gap.current,target:gap.target,gap:gap.gap,action:"Choose one small, sustained experience that develops "+gap.name.toLowerCase()+", with a clear role and measurable outcome.",reason:gap.name+" is currently your largest development gap and you do not yet have enough direct evidence.",whyNow:"The gap is "+gap.gap+" points. A focused experience can create both capability and evidence.",whyNot:"Do not optimise for prestige or certificates; choose an experience where you can contribute, take responsibility and reflect."};
+}
+function renderCandidateDNA(){
+ const candidate=computeCandidateState(); const next=getNextBestAction(candidate);
+ const grid=document.getElementById("dnaGrid");
+ if(grid)grid.innerHTML=candidate.dimensions.map(d=>"<article class=\"dna-card\"><div class=\"dna-name\">"+d.name+"</div><div class=\"dna-values\"><strong>"+d.current+"</strong><small>target "+d.target+"</small></div><div class=\"dna-bar\"><i style=\"width:"+d.current+"%\"></i></div><div class=\"dna-trend\">"+trendFor(d.name)+"</div></article>").join("");
+ const gapList=document.getElementById("gapList");
+ if(gapList)gapList.innerHTML="<div class=\"eyebrow\" style=\"margin:12px 0 7px\">TOP DEVELOPMENT GAPS</div>"+candidate.gaps.slice(0,3).map((g,i)=>"<div class=\"gap-item\"><div><b>0"+(i+1)+" · "+g.name+"</b><small>"+g.current+" current → "+g.target+" target</small></div><span class=\"gap-num\">-"+g.gap+"</span></div>").join("");
+ const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
+ set("focusTitle",next.focus);set("focusScore",next.current);set("nextAction",next.action);set("nextActionMeta",next.reason+" · Gap "+next.gap);
+ set("planFocusTitle",next.focus);set("planCurrent",next.current+" current");set("planTarget",next.target+" target");
+ const prog=document.getElementById("planProgress");if(prog)prog.style.width=next.current+"%";set("planFocusReason",next.reason);
+ const rec=document.getElementById("planRecommendation");
+ if(rec)rec.innerHTML="<span class=\"eyebrow\">WHY THIS?</span><h3>"+next.action+"</h3><p>"+next.reason+"</p><div class=\"mini-grid\"><div><b>WHY NOW</b><span>"+next.whyNow+"</span></div><div><b>WHY NOT ANOTHER</b><span>"+next.whyNot+"</span></div><div><b>DEPTH</b><span>"+(next.experience?"Continue: "+next.experience:"Build a sustained experience with real responsibility.")+"</span></div></div>";
+ const summary=document.getElementById("dnaSummary");if(summary)summary.textContent="Largest gap: "+next.focus+" −"+next.gap+" · Next: "+next.action;
+ return candidate;
+}
 function renderRequirement(key="academic"){
  const r=requirements[key];
  document.getElementById("requirementCard").innerHTML=`<span class="eyebrow">NUS MEDICINE · CURRENT MODEL</span><h2>${r.title}</h2><p>${r.body}</p><ul>${r.list.map(x=>"<li>"+x+"</li>").join("")}</ul><span class="status">● ${r.status}</span>`;
@@ -153,7 +210,7 @@ function openExperience(id){
  const x=state.experiences.find(e=>e.id===id);
  document.getElementById("modalContent").innerHTML=`<span class="eyebrow">EXPERIENCE RECORD</span><h2>${x.title}</h2><p>${x.role} · ${x.duration}</p><p>${x.description}</p><h3>What changed?</h3><textarea id="impactText" placeholder="Record the real outcome...">${x.impact||""}</textarea><h3>What did you learn?</h3><textarea id="reflectionText" placeholder="Write your reflection...">${x.learning||""}</textarea><h3>Evidence</h3><textarea id="evidenceText" placeholder="What real evidence exists? e.g. report, presentation, mentor feedback">${(x.evidenceItems||[]).join("\n")}</textarea><button class="primary" id="saveReflection">Save record</button>`;
  document.getElementById("modal").classList.add("open");
- document.getElementById("saveReflection").onclick=()=>{x.impact=document.getElementById("impactText").value.trim();x.learning=document.getElementById("reflectionText").value.trim();x.evidenceItems=document.getElementById("evidenceText").value.split("\n").map(v=>v.trim()).filter(Boolean);x.evidence=x.evidenceItems.length>0;x.reflection=x.learning.length>0;save();closeModal();renderJourney();renderPortfolio();};
+ document.getElementById("saveReflection").onclick=()=>{x.impact=document.getElementById("impactText").value.trim();x.learning=document.getElementById("reflectionText").value.trim();x.evidenceItems=document.getElementById("evidenceText").value.split("\n").map(v=>v.trim()).filter(Boolean);x.evidence=x.evidenceItems.length>0;x.reflection=x.learning.length>0;save();renderCandidateDNA();closeModal();renderJourney();renderPortfolio();};
 }
 function closeModal(){document.getElementById("modal").classList.remove("open");}
 document.getElementById("closeModal").addEventListener("click",closeModal);
@@ -167,7 +224,7 @@ document.getElementById("addExperience").addEventListener("click",()=>{
   const role=document.getElementById("newRole").value.trim()||"Participant";
   const desc=document.getElementById("newDesc").value.trim()||"Record details later.";
   state.experiences.unshift({id:Date.now(),year:String(new Date().getFullYear()),title,role,duration:"New",skills:["To assess"],evidence:false,reflection:false,portfolio:"Supporting",description:desc,impact:"",learning:"",evidenceItems:[]});
-  save();closeModal();renderJourney();
+  save();renderCandidateDNA();closeModal();renderJourney();
  };
 });
 
@@ -186,6 +243,7 @@ document.getElementById("practiceFsa").addEventListener("click",()=>{
 });
 
 renderRequirement();
+renderCandidateDNA();
 renderJourney();
 renderTasks();
 renderPortfolio();
