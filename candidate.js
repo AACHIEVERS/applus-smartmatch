@@ -4,7 +4,7 @@ const OPS=[["Deepen an existing service role","Service","Continue a real communi
 const SC=[["A teammate strongly disagrees with your proposal.","What would you do first?"],["A student you mentor is not following the plan.","How would you respond before changing it?"],["You notice a mistake just before submission.","What would you do, and why?"]];
 const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function go(id){const target=$(id);if(!target)return;document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));target.classList.add("active");document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("active",x.dataset.go===id));window.scrollTo(0,0);render()}
-const pages=["dashboard","profile","academics","journey","growth","opportunities","evidence","portfolio","fsa","application"];
+const pages=["dashboard","profile","academics","journey","reflection","growth","opportunities","evidence","portfolio","fsa","application"];
 pages.forEach(p=>{const b=document.createElement("button");b.className="nav";b.dataset.go=p;b.textContent=p==="dashboard"?"Dashboard":p.replace(/^./,x=>x.toUpperCase());$("nav").appendChild(b)});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(b){e.preventDefault();go(b.dataset.go)}});
 $("signOut").onclick=async()=>{try{if(db)await db.auth.signOut()}finally{location.href="index.html"}};
