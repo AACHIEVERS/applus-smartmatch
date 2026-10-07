@@ -15,4 +15,4 @@
 
 .auth-modal[aria-hidden="true"]{display:none!important}.auth-modal[aria-hidden="false"]{display:grid}
 
-.logo-mark{overflow:hidden;background:#fff!important;padding:3px}.logo-mark img{width:100%;height:100%;object-fit:contain;display:block;border-radius:7px}
+.logo-mark{width:150px;height:52px;border-radius:0;background:transparent!important;padding:0;overflow:visible;display:flex;align-items:center;justify-content:flex-start}.logo-mark img{width:150px;height:52px;object-fit:contain;object-position:left center;display:block;border-radius:0}
