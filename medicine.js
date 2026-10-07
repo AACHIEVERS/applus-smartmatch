@@ -19,7 +19,7 @@ function setAuthMessage(message,ok=false){
 }
 function updateAuthButton(){
  const b=document.getElementById("authBtn"); if(!b)return;
- b.textContent=currentUser ? (currentUser.phone||"Account") : "Sign in";
+ b.textContent=currentUser ? (currentUser.user_metadata?.username||"Account") : "Sign in";
 }
 async function initCloud(){
  if(!window.supabase)return;
@@ -65,7 +65,7 @@ async function loadCloudState(){
 function saveLocalOnly(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
 async function ensureProfile(profile){
  if(profile)return;
- await cloudClient.from("candidate_profiles").insert({user_id:currentUser.id,display_name:currentUser.phone||"Candidate",phone:currentUser.phone||null,stage:"Sec 4",target_programme:"NUS Medicine",current_focus:"Leadership",focus_score:58,target_score:70});
+ await cloudClient.from("candidate_profiles").insert({user_id:currentUser.id,display_name:currentUser.user_metadata?.username||"Candidate",username:currentUser.user_metadata?.username||null,phone:null,stage:"Sec 4",target_programme:"NUS Medicine",current_focus:"Leadership",focus_score:58,target_score:70});
 }
 async function migrateLocalExperiences(){
  for(const x of [...state.experiences]){
@@ -81,7 +81,7 @@ async function migrateLocalExperiences(){
 }
 async function cloudSaveState(){
  if(!cloudClient||!currentUser||cloudBusy)return;
- const candidate=computeCandidateState(); const next=getNextBestAction(candidate); const profile={user_id:currentUser.id,phone:currentUser.phone||null,stage:document.getElementById("stageLabel")?.textContent||"Sec 4",target_programme:"NUS Medicine",current_focus:next.focus,focus_score:next.current,target_score:next.target,updated_at:new Date().toISOString()};
+ const candidate=computeCandidateState(); const next=getNextBestAction(candidate); const profile={user_id:currentUser.id,username:currentUser.user_metadata?.username||null,phone:null,stage:document.getElementById("stageLabel")?.textContent||"Sec 4",target_programme:"NUS Medicine",current_focus:next.focus,focus_score:next.current,target_score:next.target,updated_at:new Date().toISOString()};
  const {error:pe}=await cloudClient.from("candidate_profiles").upsert(profile);
  if(pe){console.warn(pe);return;}
  for(const x of state.experiences){
@@ -116,32 +116,39 @@ async function syncTasks(){
    await cloudClient.from("action_plans").upsert(payload,{onConflict:"user_id,position"});
  }
 }
+function normalizeUsername(value){
+ return value.trim().toLowerCase();
+}
+function usernameEmail(username){
+ return normalizeUsername(username)+"@smartmatch.local";
+}
+function validUsername(username){
+ return /^[a-z0-9][a-z0-9._-]{2,31}$/.test(username);
+}
 async function signIn(){
- const phone=document.getElementById("authPhone").value.trim(),password=document.getElementById("authPassword").value;
- if(!phone||!password)return setAuthMessage("Enter your phone number and password.");
+ const username=normalizeUsername(document.getElementById("authUsername").value),password=document.getElementById("authPassword").value;
+ if(!validUsername(username))return setAuthMessage("Use 3–32 characters: letters, numbers, dot, dash or underscore.");
+ if(!password)return setAuthMessage("Enter your username and password.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Signing in…");
- const {error}=await cloudClient.auth.signInWithPassword({phone,password});
- if(error){
-   const msg=String(error.message||"");
-   const friendly=/invalid login credentials|phone not confirmed|phone.*confirm/i.test(msg)?"Phone number or password is incorrect.":msg;
-   return setAuthMessage(friendly);
- }
+ const {error}=await cloudClient.auth.signInWithPassword({email:usernameEmail(username),password});
+ if(error)return setAuthMessage("Username or password is incorrect.");
  setAuthMessage("Signed in. Your journey is syncing.",true);
  setAuthModal(false);
 }
 async function signUp(){
- const phone=document.getElementById("authPhone").value.trim(),password=document.getElementById("authPassword").value;
- if(!phone||password.length<6)return setAuthMessage("Use a phone number and a password of at least 6 characters.");
+ const username=normalizeUsername(document.getElementById("authUsername").value),password=document.getElementById("authPassword").value;
+ if(!validUsername(username))return setAuthMessage("Use 3–32 characters: letters, numbers, dot, dash or underscore.");
+ if(password.length<6)return setAuthMessage("Use a password of at least 6 characters.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Creating account…");
- const {data,error}=await cloudClient.auth.signUp({phone,password});
- if(error)return setAuthMessage(error.message);
+ const {data,error}=await cloudClient.auth.signUp({email:usernameEmail(username),password,options:{data:{username}}});
+ if(error)return setAuthMessage(/already registered/i.test(error.message)?"That username is already in use.":error.message);
  if(data.session){
    setAuthMessage("Account created. You are signed in.",true);
    setAuthModal(false);
  }else{
-   setAuthMessage("Account created. Please check that Phone Auth is enabled and phone confirmation is disabled.",true);
+   setAuthMessage("Account created. Email confirmation must be disabled in Supabase Auth for direct login.",true);
  }
 }
 function showPage(page){
