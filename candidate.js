@@ -278,7 +278,7 @@ async function start(){
  if($("userName"))$("userName").textContent="Loading…";
  try{
   if(!window.supabase?.createClient)throw new Error("Supabase client unavailable");
-  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});window.__candidateDb=db;
   const s=await db.auth.getSession();user=s.data.session?.user;
   if(!user){$("userName").textContent="Not signed in";toast("Your session has expired. Returning to sign in.");setTimeout(()=>window.location.replace("index.html"),900);return}
   $("userName").textContent=user.user_metadata?.display_name||user.email||"Account";
