@@ -172,7 +172,7 @@ document.getElementById("authBtn").addEventListener("click",async()=>{
 });
 document.getElementById("closeAuth").addEventListener("click",()=>setAuthModal(false));
 document.getElementById("authModal").addEventListener("click",e=>{if(e.target.id==="authModal")setAuthModal(false);});
-document.getElementById("adminBtn")?.addEventListener("click",()=>{document.getElementById("adminModal")?.classList.add("open");});
+document.getElementById("adminBtn")?.addEventListener("click",()=>{window.location.href="admin.html";});
 document.getElementById("closeAdminModal")?.addEventListener("click",()=>document.getElementById("adminModal")?.classList.remove("open"));
 document.getElementById("adminModal")?.addEventListener("click",e=>{if(e.target.id==="adminModal")e.currentTarget.classList.remove("open");});
 document.getElementById("createUserBtn")?.addEventListener("click",async()=>{
