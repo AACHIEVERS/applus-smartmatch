@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartMatch — Admin</title>
+<meta name="description" content="SmartMatch administrator user management.">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="admin-topbar">
+  <a class="brand" href="index.html"><span class="brand-mark"><img src="https://aplusachiever.github.io/aplus-achiever-website/logo.png" alt="APlus Achiever"></span><span>SmartMatch <small>Admin</small></span></a>
+  <div class="top-actions">
+    <span id="adminIdentity" class="identity"></span>
+    <button id="signOutBtn" class="ghost" type="button">Sign out</button>
+  </div>
+</header>
+
+<main class="admin-shell">
+  <section id="loadingView" class="state-card">
+    <span class="eyebrow">ADMIN</span>
+    <h1>Checking access…</h1>
+    <p>Please wait.</p>
+  </section>
+
+  <section id="deniedView" class="state-card" hidden>
+    <span class="eyebrow">ACCESS</span>
+    <h1>Administrator access required.</h1>
+    <p id="deniedMessage">Sign in with an administrator account to use this page.</p>
+    <a class="primary-link" href="index.html">Back to SmartMatch</a>
+  </section>
+
+  <section id="adminView" hidden>
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">ADMINISTRATOR</p>
+        <h1>User Management</h1>
+        <p>Create and manage SmartMatch student accounts. Students receive a User ID and password and do not need to sign up themselves.</p>
+      </div>
+      <a class="secondary-link" href="index.html">← Medicine OS</a>
+    </div>
+
+    <div class="grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <div><span class="step">01</span><h2>Create student account</h2></div>
+        </div>
+        <label>User ID<input id="username" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="e.g. student001"></label>
+        <p class="field-help">3–32 characters: a–z, 0–9, dot, dash or underscore.</p>
+        <label>Password<input id="password" type="password" autocomplete="new-password" placeholder="At least 8 characters"></label>
+        <label>Name<input id="name" type="text" autocomplete="off" placeholder="Student name"></label>
+        <button id="createBtn" class="primary" type="button">Create User</button>
+        <div id="createMessage" class="message" aria-live="polite"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div><span class="step">02</span><h2>Student accounts</h2></div>
+          <button id="refreshBtn" class="small-btn" type="button">Refresh</button>
+        </div>
+        <div id="usersList" class="users-list"><div class="empty">Loading accounts…</div></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
