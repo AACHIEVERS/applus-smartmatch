@@ -43,7 +43,7 @@ async function loadCloudState(){
    if(pe) throw pe; if(ee) throw ee;
    if(rows&&rows.length){
      state.experiences=rows.map(x=>({id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],evidence:Boolean(x.evidence),reflection:Boolean(x.learning),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:x.impact||"",learning:x.learning||"",evidenceItems:[]}));
-     if(plans?.length) state.tasks=[0,1,2,3].map(i=>plans.find(p=>p.position===i+1)?.status==="completed");
+     if(plans?.length) state.tasks=[0,1,2,3].map(i=>plans.find(p=>p.position===i+1)?.status==="done");
      saveLocalOnly();
      renderJourney();renderPortfolio();renderTasks();
    }else{
@@ -88,7 +88,7 @@ async function cloudSaveState(){
 async function syncTasks(){
  if(!cloudClient||!currentUser)return;
  for(let i=0;i<state.tasks.length;i++){
-   const payload={user_id:currentUser.id,position:i+1,title:["Take ownership of one project task","Record what changed","Add one piece of evidence","Write a short reflection"][i],status:state.tasks[i]?"completed":"planned"};
+   const payload={user_id:currentUser.id,position:i+1,title:["Take ownership of one project task","Record what changed","Add one piece of evidence","Write a short reflection"][i],status:state.tasks[i]?"done":"todo"};
    await cloudClient.from("action_plans").upsert(payload,{onConflict:"user_id,position"});
  }
 }
