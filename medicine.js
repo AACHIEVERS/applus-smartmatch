@@ -8,7 +8,107 @@ const initial={
  tasks:[false,false,false,false]
 };
 let state=JSON.parse(localStorage.getItem(STORE_KEY)||"null")||initial;\nstate.experiences=state.experiences.map(x=>({...x,impact:x.impact||"",learning:x.learning||"",evidenceItems:x.evidenceItems||[]}));
-function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state)); cloudSaveState();}
+
+let cloudClient=null, currentUser=null, cloudReady=false, cloudBusy=false;
+const SUPABASE_URL="https://xndgplkeayyrtzqgphlj.supabase.co";
+const SUPABASE_KEY="sb_publishable_QQ_FVe4_XJA8vaLWg9FXPQ_PwamKnNa";
+function setAuthMessage(message,ok=false){
+ const el=document.getElementById("authMessage"); if(el){el.textContent=message;el.className="auth-message "+(ok?"ok":"");}
+}
+function updateAuthButton(){
+ const b=document.getElementById("authBtn"); if(!b)return;
+ b.textContent=currentUser ? (currentUser.email||"Account") : "Sign in";
+}
+async function initCloud(){
+ if(!window.supabase)return;
+ cloudClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const {data}=await cloudClient.auth.getSession();
+ currentUser=data.session?.user||null; updateAuthButton();
+ cloudClient.auth.onAuthStateChange(async (_event,session)=>{
+   currentUser=session?.user||null; updateAuthButton();
+   if(currentUser) await loadCloudState();
+ });
+ if(currentUser) await loadCloudState();
+}
+async function loadCloudState(){
+ if(!cloudClient||!currentUser||cloudBusy)return;
+ cloudBusy=true;
+ try{
+   const [{data:profile,error:pe},{data:rows,error:ee},{data:plans,error:ae}]=await Promise.all([
+     cloudClient.from("candidate_profiles").select("*").eq("user_id",currentUser.id).maybeSingle(),
+     cloudClient.from("experiences").select("*").eq("user_id",currentUser.id).order("year",{ascending:false}),
+     cloudClient.from("action_plans").select("*").eq("user_id",currentUser.id).order("position",{ascending:true})
+   ]);
+   if(pe) throw pe; if(ee) throw ee;
+   if(rows&&rows.length){
+     state.experiences=rows.map(x=>({id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],evidence:Boolean(x.evidence),reflection:Boolean(x.learning),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:x.impact||"",learning:x.learning||"",evidenceItems:[]}));
+     if(plans?.length) state.tasks=[0,1,2,3].map(i=>plans.find(p=>p.position===i+1)?.status==="completed");
+     saveLocalOnly();
+     renderJourney();renderPortfolio();renderTasks();
+   }else{
+     await ensureProfile(profile);
+     await migrateLocalExperiences();
+     await syncTasks();
+   }
+ }catch(err){console.warn("Cloud sync unavailable:",err?.message||err);}
+ finally{cloudBusy=false;}
+}
+function saveLocalOnly(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+async function ensureProfile(profile){
+ if(profile)return;
+ await cloudClient.from("candidate_profiles").insert({user_id:currentUser.id,display_name:currentUser.email?.split("@")[0]||"Candidate",stage:"Sec 4",target_programme:"NUS Medicine",current_focus:"Leadership",focus_score:58,target_score:70});
+}
+async function migrateLocalExperiences(){
+ for(const x of [...state.experiences]){
+   const payload={user_id:currentUser.id,year:x.year,title:x.title,role:x.role,duration:x.duration,description:x.description,impact:x.impact||"",learning:x.learning||"",skills:x.skills||[],portfolio_status:x.portfolio||"Supporting",lifecycle_status:x.learning&&x.evidence?"Reflected":"Active"};
+   const {data,error}=await cloudClient.from("experiences").insert(payload).select().single();
+   if(error)throw error;
+   x.id=data.id;
+   if((x.evidenceItems||[]).length) await cloudClient.from("evidence").insert((x.evidenceItems||[]).map(v=>({user_id:currentUser.id,experience_id:data.id,evidence_type:"record",title:v})));
+   if(x.learning||x.impact) await cloudClient.from("reflections").insert({user_id:currentUser.id,experience_id:data.id,learning:x.learning||"",what_changed:x.impact||""});
+ }
+ saveLocalOnly();renderJourney();renderPortfolio();
+ await syncTasks();
+}
+async function cloudSaveState(){
+ if(!cloudClient||!currentUser||cloudBusy)return;
+ const profile={user_id:currentUser.id,stage:document.getElementById("stageLabel")?.textContent||"Sec 4",target_programme:"NUS Medicine",current_focus:"Leadership",focus_score:Number(document.getElementById("focusScore")?.textContent||58),target_score:70,updated_at:new Date().toISOString()};
+ const {error:pe}=await cloudClient.from("candidate_profiles").upsert(profile);
+ if(pe){console.warn(pe);return;}
+ for(const x of state.experiences){
+   const payload={user_id:currentUser.id,year:x.year,title:x.title,role:x.role,duration:x.duration,description:x.description,impact:x.impact||"",learning:x.learning||"",skills:x.skills||[],portfolio_status:x.portfolio||"Supporting",lifecycle_status:x.learning&&x.evidence?"Reflected":"Active"};
+   if(typeof x.id==="string"&&x.id.includes("-")) payload.id=x.id;
+   const {data,error}=await cloudClient.from("experiences").upsert(payload).select().single();
+   if(!error&&data)x.id=data.id;
+ }
+ saveLocalOnly();
+ await syncTasks();
+}
+async function syncTasks(){
+ if(!cloudClient||!currentUser)return;
+ for(let i=0;i<state.tasks.length;i++){
+   const payload={user_id:currentUser.id,position:i+1,title:["Take ownership of one project task","Record what changed","Add one piece of evidence","Write a short reflection"][i],status:state.tasks[i]?"completed":"planned"};
+   await cloudClient.from("action_plans").upsert(payload,{onConflict:"user_id,position"});
+ }
+}
+async function signIn(){
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||!password)return setAuthMessage("Enter your email and password.");
+ setAuthMessage("Signing in…");
+ const {error}=await cloudClient.auth.signInWithPassword({email,password});
+ setAuthMessage(error?error.message:"Signed in. Your journey is syncing.",!error);
+ if(!error)document.getElementById("authModal").classList.remove("open");
+}
+async function signUp(){
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||password.length<6)return setAuthMessage("Use an email and a password of at least 6 characters.");
+ setAuthMessage("Creating account…");
+ const {data,error}=await cloudClient.auth.signUp({email,password});
+ if(error)return setAuthMessage(error.message);
+ setAuthMessage(data.session?"Account created and signed in.":"Account created. Check your email to confirm, then sign in.",true);
+}
+
 function showPage(page){
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
  document.querySelector("#page-"+page).classList.add("active");
@@ -16,6 +116,10 @@ function showPage(page){
  window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll("[data-page]").forEach(x=>x.addEventListener("click",()=>showPage(x.dataset.page)));
+document.getElementById("authBtn").addEventListener("click",async()=>{if(!cloudClient)return; if(currentUser){if(confirm("Sign out of SmartMatch?"))await cloudClient.auth.signOut();}else{document.getElementById("authModal").classList.add("open");}});
+document.getElementById("closeAuth").addEventListener("click",()=>document.getElementById("authModal").classList.remove("open"));
+document.getElementById("signInBtn").addEventListener("click",signIn);
+document.getElementById("signUpBtn").addEventListener("click",signUp);
 document.getElementById("resetDemo").addEventListener("click",()=>{if(confirm("Reset the demo record?")){localStorage.removeItem(STORE_KEY);location.reload();}});
 
 const requirements={
@@ -77,3 +181,4 @@ renderRequirement();
 renderJourney();
 renderTasks();
 renderPortfolio();
+window.addEventListener("DOMContentLoaded",()=>initCloud());
