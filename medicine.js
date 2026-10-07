@@ -142,6 +142,7 @@ async function signIn(){
    if(error||!data?.access_token||!data?.refresh_token)return setAuthMessage(data?.error||"Username or password is incorrect.");
    const {error:sessionError}=await cloudClient.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
    if(sessionError)return setAuthMessage("Unable to start your session. Please try again.");
+   await cloudClient.auth.refreshSession();
    setAuthMessage("Signed in. Your journey is syncing.",true);
    setAuthModal(false);
  }catch(err){
