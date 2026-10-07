@@ -126,12 +126,14 @@ function validUsername(username){
  return /^[a-z0-9][a-z0-9._-]{2,31}$/.test(username);
 }
 async function signIn(){
- const username=normalizeUsername(document.getElementById("authUsername").value),password=document.getElementById("authPassword").value;
- if(!validUsername(username))return setAuthMessage("Please enter the User ID and password provided by the administrator.");
- if(!password)return setAuthMessage("Enter your username and password.");
+ const raw=document.getElementById("authUsername").value.trim(),password=document.getElementById("authPassword").value;
+ const identifier=raw.toLowerCase();
+ if(!raw)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
+ if(!password)return setAuthMessage("Please enter the User ID and password provided by the administrator.");
  if(!cloudClient)return setAuthMessage("Account sync is still loading…");
  setAuthMessage("Signing in…");
- const {error}=await cloudClient.auth.signInWithPassword({email:usernameEmail(username),password});
+ const email=identifier.includes("@")?identifier:usernameEmail(identifier);
+ const {error}=await cloudClient.auth.signInWithPassword({email,password});
  if(error)return setAuthMessage("Username or password is incorrect.");
  setAuthMessage("Signed in. Your journey is syncing.",true);
  setAuthModal(false);
