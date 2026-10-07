@@ -7,7 +7,8 @@ const initial={
  ],
  tasks:[false,false,false,false]
 };
-let state=JSON.parse(localStorage.getItem(STORE_KEY)||"null")||initial;\nstate.experiences=state.experiences.map(x=>({...x,impact:x.impact||"",learning:x.learning||"",evidenceItems:x.evidenceItems||[]}));
+let state=JSON.parse(localStorage.getItem(STORE_KEY)||"null")||initial;
+state.experiences=state.experiences.map(x=>({...x,impact:x.impact||"",learning:x.learning||"",evidenceItems:x.evidenceItems||[]}));
 function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state)); cloudSaveState();}
 
 let cloudClient=null, currentUser=null, cloudReady=false, cloudBusy=false;
@@ -219,9 +220,11 @@ function renderJourney(){
 }
 function openExperience(id){
  const x=state.experiences.find(e=>e.id===id);
- document.getElementById("modalContent").innerHTML=`<span class="eyebrow">EXPERIENCE RECORD</span><h2>${x.title}</h2><p>${x.role} · ${x.duration}</p><p>${x.description}</p><h3>What changed?</h3><textarea id="impactText" placeholder="Record the real outcome...">${x.impact||""}</textarea><h3>What did you learn?</h3><textarea id="reflectionText" placeholder="Write your reflection...">${x.learning||""}</textarea><h3>Evidence</h3><textarea id="evidenceText" placeholder="What real evidence exists? e.g. report, presentation, mentor feedback">${(x.evidenceItems||[]).join("\n")}</textarea><button class="primary" id="saveReflection">Save record</button>`;
+ document.getElementById("modalContent").innerHTML=`<span class="eyebrow">EXPERIENCE RECORD</span><h2>${x.title}</h2><p>${x.role} · ${x.duration}</p><p>${x.description}</p><h3>What changed?</h3><textarea id="impactText" placeholder="Record the real outcome...">${x.impact||""}</textarea><h3>What did you learn?</h3><textarea id="reflectionText" placeholder="Write your reflection...">${x.learning||""}</textarea><h3>Evidence</h3><textarea id="evidenceText" placeholder="What real evidence exists? e.g. report, presentation, mentor feedback">${(x.evidenceItems||[]).join("
+")}</textarea><button class="primary" id="saveReflection">Save record</button>`;
  document.getElementById("modal").classList.add("open");
- document.getElementById("saveReflection").onclick=()=>{x.impact=document.getElementById("impactText").value.trim();x.learning=document.getElementById("reflectionText").value.trim();x.evidenceItems=document.getElementById("evidenceText").value.split("\n").map(v=>v.trim()).filter(Boolean);x.evidence=x.evidenceItems.length>0;x.reflection=x.learning.length>0;save();renderCandidateDNA();closeModal();renderJourney();renderPortfolio();};
+ document.getElementById("saveReflection").onclick=()=>{x.impact=document.getElementById("impactText").value.trim();x.learning=document.getElementById("reflectionText").value.trim();x.evidenceItems=document.getElementById("evidenceText").value.split("
+").map(v=>v.trim()).filter(Boolean);x.evidence=x.evidenceItems.length>0;x.reflection=x.learning.length>0;save();renderCandidateDNA();closeModal();renderJourney();renderPortfolio();};
 }
 function closeModal(){document.getElementById("modal").classList.remove("open");}
 document.getElementById("closeModal").addEventListener("click",closeModal);
