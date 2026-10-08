@@ -258,6 +258,7 @@ window.openReflection=async id=>{const r=reflections.find(x=>x.id===id);if(!r)re
 };
 
 function bindForms(){
+ window.__candidateEvidenceReady=true;
  $("profileForm")?.addEventListener("submit",async e=>{e.preventDefault();if(!db||!user)return toast("Please sign in first.");const o=Object.fromEntries(new FormData(e.target)),d={...(profile?.profile_data||{}),...o};const q=await db.from("candidate_profiles").update({display_name:o.display_name,school:o.school,stage:o.stage,target_programme:o.target_programme,profile_data:d,updated_at:new Date().toISOString()}).eq("user_id",user.id);$("profileMsg").textContent=q.error?q.error.message:"Saved.";if(!q.error){await load();render()}});
  $("academicForm")?.addEventListener("submit",async e=>{e.preventDefault();if(!db||!user)return toast("Please sign in first.");const o=Object.fromEntries(new FormData(e.target)),q=await db.from("candidate_profiles").update({academic_data:o,updated_at:new Date().toISOString()}).eq("user_id",user.id);$("academicMsg").textContent=q.error?q.error.message:"Saved.";if(!q.error){await load();render()}});
  $("applicationForm")?.addEventListener("submit",async e=>{e.preventDefault();if(!db||!user)return toast("Please sign in first.");const o=Object.fromEntries(new FormData(e.target)),q=await db.from("candidate_profiles").update({application_data:o,updated_at:new Date().toISOString()}).eq("user_id",user.id);$("applicationMsg").textContent=q.error?q.error.message:"Saved.";if(!q.error){await load();render()}});
