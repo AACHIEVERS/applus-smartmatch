@@ -268,6 +268,7 @@ function renderRequirement(key="academic"){
 document.querySelectorAll(".admission-step").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".admission-step").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderRequirement(b.dataset.req);}));
 
 function renderJourney(){
+ if(window.__smartmatchEnhancedJourney){ window.__smartmatchEnhancedJourney(); return; }
  const list=document.getElementById("journeyList");
  const years=[...new Set(state.experiences.map(x=>x.year))].sort((a,b)=>b-a);
  list.innerHTML=years.map(y=>`<div class="journey-year">${y}</div>`+state.experiences.filter(x=>x.year==y).map(x=>`<article class="journey-card"><div><h3>${x.title}</h3><p>${x.role} · ${x.duration}</p><div class="chips">${x.skills.map(s=>`<span class="chip">${s}</span>`).join("")}</div><p style="margin-top:12px">${x.description}</p><div class="chips"><span class="chip">${x.evidence?"Evidence ✓":"Evidence needed"}</span><span class="chip">${x.reflection?"Reflection ✓":"Reflection needed"}</span></div></div><div class="record-state">${x.portfolio}<br><button class="text-btn" style="margin-top:12px" onclick="openExperience(${x.id})">Open →</button></div></article>`).join("")).join("")||"<p>No experiences yet.</p>";
