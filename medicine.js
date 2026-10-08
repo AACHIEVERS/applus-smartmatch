@@ -208,14 +208,14 @@ const requirements={
 const DNA_DIMENSIONS=[
  {name:"Academic",target:75,aliases:["Academic"]},
  {name:"Scientific Thinking",target:75,aliases:["Scientific Thinking","Research"]},
- {name:"Medical Insight",target:65,aliases:["Medical Insight","Medicine"]},
- {name:"Service",target:70,aliases:["Service","Community"]},
- {name:"Leadership",target:70,aliases:["Leadership","Ownership"]},
+ {name:"Medicine Motivation & Insight",target:65,aliases:["Medical Insight","Medicine","Motivation","Patient","Healthcare"]},
+ {name:"Service & Empathy",target:70,aliases:["Service","Community","Empathy","Care"]},
+ {name:"Leadership & Ownership",target:70,aliases:["Leadership","Ownership","Coordinator","Captain","Founder"]},
  {name:"Communication",target:70,aliases:["Communication","Debate"]},
  {name:"Reasoning & Ethics",target:72,aliases:["Reasoning","Ethics"]},
  {name:"Reflection & Character",target:70,aliases:["Reflection","Character"]}
 ];
-const DNA_BASE={Academic:62,"Scientific Thinking":52,"Medical Insight":50,Service:52,Leadership:58,Communication:52,"Reasoning & Ethics":55,"Reflection & Character":55};
+const DNA_BASE={Academic:62,"Scientific Thinking":52,"Medicine Motivation & Insight":50,"Service & Empathy":52,"Leadership & Ownership":58,Communication:52,"Reasoning & Ethics":55,"Reflection & Character":55};
 function scoreDimension(d){
  let score=DNA_BASE[d.name]||50;
  const related=state.experiences.filter(x=>(x.skills||[]).some(s=>d.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
@@ -249,9 +249,30 @@ function getNextBestAction(candidate){
 function renderCandidateDNA(){
  const candidate=computeCandidateState(); const next=getNextBestAction(candidate);
  const grid=document.getElementById("dnaGrid");
- if(grid)grid.innerHTML=candidate.dimensions.map(d=>"<article class=\"dna-card\"><div class=\"dna-name\">"+d.name+"</div><div class=\"dna-values\"><strong>"+d.current+"</strong><small>target "+d.target+"</small></div><div class=\"dna-bar\"><i style=\"width:"+d.current+"%\"></i></div><div class=\"dna-trend\">"+trendFor(d.name)+"</div></article>").join("");
+ const advice={
+  "Academic":{why:"Academic readiness is a separate eligibility gate. This signal is for planning only, not an NUS admission score.",evidence:"Relevant grades, subject prerequisites and academic progress.",action:"Keep academic requirements on track first; then invest development time in experiences."},
+  "Scientific Thinking":{why:"Your record shows how you investigate questions, use evidence and test assumptions.",evidence:"Research, experiments, projects, data analysis, scientific presentations.",action:"Deepen one investigation and record the question, method, evidence and conclusion."},
+  "Medicine Motivation & Insight":{why:"NUS FSA includes an interview station that draws out motivation and aptitude to study medicine. This is not a test of medical knowledge.",evidence:"Sustained people-facing experiences, thoughtful observations, conversations, service and reflections about why healthcare matters to you.",action:"Deepen one existing experience and record what you learned about people, healthcare and your own motivation."},
+  "Service & Empathy":{why:"Service and insight matter more when they show genuine attention to other people rather than simply hours collected.",evidence:"Sustained service, listening, support, community contribution and feedback from people you worked with.",action:"Continue one meaningful service commitment and document a concrete change or contribution."},
+  "Leadership & Ownership":{why:"Leadership is stronger when you own an outcome, make decisions and are accountable for what changes.",evidence:"A defined responsibility, decisions made, coordination, measurable outcomes and feedback.",action:"Take ownership of one real outcome inside an existing activity instead of adding another activity."},
+  "Communication":{why:"Communication is demonstrated through listening, explaining, adapting and working with others.",evidence:"Presentations, debate, teamwork, mentoring, interviews and difficult conversations.",action:"Practise one situation where you must listen first, adapt your response and explain clearly."},
+  "Reasoning & Ethics":{why:"Strong candidates need to reason carefully when information, perspectives or values conflict.",evidence:"Debate, decisions, competing viewpoints, ethical questions and evidence-based explanations.",action:"Record one situation where you considered another perspective before deciding."},
+  "Reflection & Character":{why:"Reflection turns an activity into learning: what changed in your thinking, behaviour or values.",evidence:"Specific lessons, changed behaviour, mistakes, feedback and follow-through over time.",action:"After your next meaningful experience, write what changed in you and what you will do differently."}
+ };
+ if(grid)grid.innerHTML=candidate.dimensions.map((d,i)=>{
+   const a=advice[d.name]||{why:"This is a SmartMatch development signal.",evidence:"Evidence from your recorded journey.",action:"Strengthen this through one sustained, meaningful experience."};
+   return "<article class=\"dna-card dna-card-action\" data-dna-index=\""+i+"\"><div class=\"dna-name\">"+d.name+"</div><div class=\"dna-values\"><strong>"+d.current+"</strong><small>target "+d.target+"</small></div><div class=\"dna-bar\"><i style=\"width:"+d.current+"%\"></i></div><div class=\"dna-trend\">"+trendFor(d.name)+"</div><div class=\"dna-detail\"><div><b>WHY</b><p>"+a.why+"</p></div><div><b>EVIDENCE FOUND</b><p>"+a.evidence+"</p></div><div><b>NEXT ACTION</b><p>"+a.action+"</p></div></div><button class=\"dna-more\" type=\"button\">Why / Evidence / Next Action ↓</button></article>";
+ }).join("");
+ document.querySelectorAll(".dna-card-action").forEach(card=>card.addEventListener("click",e=>{
+   if(e.target.closest(".dna-more"))card.classList.toggle("expanded");
+ }));
  const gapList=document.getElementById("gapList");
- if(gapList)gapList.innerHTML="<div class=\"eyebrow\" style=\"margin:12px 0 7px\">TOP DEVELOPMENT GAPS</div>"+candidate.gaps.slice(0,3).map((g,i)=>"<div class=\"gap-item\"><div><b>0"+(i+1)+" · "+g.name+"</b><small>"+g.current+" current → "+g.target+" target</small></div><span class=\"gap-num\">-"+g.gap+"</span></div>").join("");
+ if(gapList){
+   gapList.innerHTML="<div class=\"eyebrow\" style=\"margin:12px 0 7px\">TOP DEVELOPMENT GAPS</div>"+candidate.gaps.slice(0,3).map((g,i)=>{
+     const a=advice[g.name]||{};
+     return "<div class=\"gap-item\"><div><b>0"+(i+1)+" · "+g.name+"</b><small>"+g.current+" current → "+g.target+" target</small><small>"+(a.action||"Strengthen this through evidence and reflection.")+"</small></div><span class=\"gap-num\">-"+g.gap+"</span></div>";
+   }).join("");
+ }
  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
  set("focusTitle",next.focus);set("focusScore",next.current);set("nextAction",next.action);set("nextActionMeta",next.reason+" · Gap "+next.gap);
  set("planFocusTitle",next.focus);set("planCurrent",next.current+" current");set("planTarget",next.target+" target");
