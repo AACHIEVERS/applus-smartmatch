@@ -26,6 +26,7 @@
     }
     var ae=e.target.closest&&e.target.closest("#addEvidence");
     if(ae){
+      if(window.__candidateEvidenceReady)return;
       e.preventDefault();
       var xs=window.__candidateExperiences||[];
       if(window.openEvidenceFallback){window.openEvidenceFallback();return;}
