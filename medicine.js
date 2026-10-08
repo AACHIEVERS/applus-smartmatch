@@ -8,6 +8,12 @@ const initial={
  tasks:[false,false,false,false]
 };
 let state=JSON.parse(localStorage.getItem(STORE_KEY)||"null")||initial;
+function dedupeExperienceState(items){
+ const seen=new Set(),out=[];
+ (items||[]).forEach(x=>{const sig=[x.year,x.title,x.role,x.duration,x.description,x.impact,x.learning].join("\u001f").toLowerCase().trim();if(!seen.has(sig)){seen.add(sig);out.push(x);}});
+ return out;
+}
+state.experiences=dedupeExperienceState(state.experiences);
 state.experiences=state.experiences.map(x=>({...x,impact:x.impact||"",learning:x.learning||"",evidenceItems:x.evidenceItems||[]}));
 function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state)); cloudSaveState();}
 
