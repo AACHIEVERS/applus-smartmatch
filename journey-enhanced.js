@@ -153,6 +153,7 @@
 
   function boot(){
     if(typeof state==="undefined")return;
+    window.__smartmatchEnhancedJourney=render;
     render();
     window.renderJourney=render;
   }
