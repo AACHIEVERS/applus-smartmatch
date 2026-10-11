@@ -235,8 +235,9 @@ const DNA_DIMENSIONS=[
 ];
 function scoreDimension(d){
  // Scores are earned from the candidate's own recorded data; never seed a new user with invented baseline points.
+ // Academic readiness cannot be inferred from extracurricular experiences and remains unassessed here.
+ if(d.name==="Academic")return 0;
  let score=0;
- // Academic readiness cannot be inferred from extracurricular experiences. Keep it at zero until verified academic data is supported and recorded.
  const related=state.experiences.filter(x=>(x.skills||[]).some(s=>d.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
  related.forEach(x=>{
    score+=7;if(x.evidence)score+=3;if(x.reflection)score+=3;
