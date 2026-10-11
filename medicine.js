@@ -56,17 +56,18 @@ async function loadCloudState(){
  if(!cloudClient||!currentUser||cloudBusy)return;
  cloudBusy=true;
  try{
-   const [{data:profile,error:pe},{data:rows,error:ee},{data:plans,error:ae}]=await Promise.all([
+   const [{data:profile,error:pe},{data:rows,error:ee},{data:plans,error:ae},{data:reflectionRows,error:re}]=await Promise.all([
      cloudClient.from("candidate_profiles").select("*").eq("user_id",currentUser.id).maybeSingle(),
      cloudClient.from("experiences").select("*").eq("user_id",currentUser.id).order("year",{ascending:false}),
-     cloudClient.from("action_plans").select("*").eq("user_id",currentUser.id).order("position",{ascending:true})
+     cloudClient.from("action_plans").select("*").eq("user_id",currentUser.id).order("position",{ascending:true}),
+     cloudClient.from("reflections").select("experience_id,learning,what_changed,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false})
    ]);
-   if(pe) throw pe; if(ee) throw ee;
+   if(pe) throw pe; if(ee) throw ee; if(ae) throw ae; if(re) throw re;
    if(rows&&rows.length){
      const ids=rows.map(x=>x.id);
      const {data:evRows}=await cloudClient.from("evidence").select("experience_id,title,evidence_type").eq("user_id",currentUser.id).in("experience_id",ids);
      if(evRows) rows.forEach(x=>{x._evidence=evRows.filter(e=>e.experience_id===x.id).map(e=>e.title||e.evidence_type);});
-     state.experiences=rows.map(x=>({id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],evidence:false,reflection:Boolean(x.learning),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:x.impact||"",learning:x.learning||"",evidenceItems:x._evidence||[],evidence:Boolean((x._evidence||[]).length)}));
+     state.experiences=rows.map(x=>{ const r=(reflectionRows||[]).find(v=>v.experience_id===x.id); const learning=(r&&r.learning)||x.learning||""; const impact=(r&&r.what_changed)||x.impact||""; return {id:x.id,year:x.year||"",title:x.title||"Experience",role:x.role||"Participant",duration:x.duration||"",skills:x.skills||[],reflection:Boolean(learning||impact),portfolio:x.portfolio_status||"Supporting",description:x.description||"",impact:impact,learning:learning,evidenceItems:x._evidence||[],evidence:Boolean((x._evidence||[]).length)}; });
      if(plans?.length) state.tasks=[0,1,2,3].map(i=>plans.find(p=>p.position===i+1)?.status==="done");
      saveLocalOnly();
      renderJourney();renderPortfolio();renderTasks();
