@@ -2,15 +2,60 @@ name: Validate Medicine OS
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Check JavaScript syntax
-        run: node --check medicine.js
-      - name: Check HTML scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check all JavaScript syntax
+        run: |
+          set -e
+          for file in ./*.js; do
+            [ -f "$file" ] || continue
+            echo "Checking $file"
+            node --check "$file"
+          done
+      - name: Check required app files
         run: |
           test -f index.html
+          test -f candidate.html
           test -f medicine.js
+          test -f candidate.js
+          test -f medicine.css
+          test -f candidate.css
+      - name: Check local script and stylesheet references
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Assets(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.paths = []
+              def handle_starttag(self, tag, attrs):
+                  a = dict(attrs)
+                  if tag == "script" and a.get("src"):
+                      self.paths.append(a["src"].split("?")[0])
+                  if tag == "link" and a.get("rel") == "stylesheet" and a.get("href"):
+                      self.paths.append(a["href"].split("?")[0])
+          errors = []
+          for html in (Path("index.html"), Path("candidate.html"), Path("admin.html")):
+              if not html.exists():
+                  continue
+              parser = Assets()
+              parser.feed(html.read_text(encoding="utf-8"))
+              for asset in parser.paths:
+                  if asset.startswith(("http://", "https://", "//", "data:")):
+                      continue
+                  if not (html.parent / asset).exists():
+                      errors.append(f"{html}: missing local asset {asset}")
+          if errors:
+              print("\\n".join(errors))
+              raise SystemExit(1)
+          print("Local app assets verified.")
+          PY
