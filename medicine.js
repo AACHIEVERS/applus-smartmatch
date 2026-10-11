@@ -42,15 +42,22 @@ async function initCloud(){
  currentUser=data.session?.user||null;
  if(currentUser){ const refreshed=await cloudClient.auth.refreshSession(); currentUser=refreshed.data.session?.user||currentUser; }
  updateAuthButton(); updateAdminButton();
+ // The public landing page may show demo content, but an authenticated session belongs in Candidate OS.
+ // Never render or sync the public demo/local cache as if it were a user's personal record.
+ if(currentUser){ window.location.replace("candidate.html"); return; }
  cloudClient.auth.onAuthStateChange(async (event,session)=>{
    currentUser=session?.user||null; updateAuthButton(); updateAdminButton();
    if(event==="SIGNED_IN" && currentUser){
-     setAuthMessage("Signed in — your journey is syncing.",true);
-     setAuthModal(false); window.location.href="candidate.html";
-     await loadCloudState();
-   }else if(currentUser) await loadCloudState();
+     setAuthMessage("Signed in — opening your private Candidate OS.",true);
+     setAuthModal(false);
+     window.location.replace("candidate.html");
+   }else if(!currentUser){
+     // Do not retain another session's in-memory data on the public landing page.
+     state={experiences:[],tasks:[false,false,false,false]};
+     localStorage.removeItem(STORE_KEY);
+     renderJourney();renderPortfolio();renderTasks();
+   }
  });
- if(currentUser) await loadCloudState();
 }
 async function loadCloudState(){
  if(!cloudClient||!currentUser||cloudBusy)return;
@@ -72,9 +79,12 @@ async function loadCloudState(){
      saveLocalOnly();
      renderJourney();renderPortfolio();renderTasks();
    }else{
+     // A new account starts empty. Never promote anonymous/demo browser records into a personal account.
+     state={experiences:[],tasks:[false,false,false,false]};
+     saveLocalOnly();
      await ensureProfile(profile);
-     // Keep local-only records available for the user, but do not silently import demo/sample cards into the database.
      await syncTasks();
+     renderJourney();renderPortfolio();renderTasks();
    }
  }catch(err){console.warn("Cloud sync unavailable:",err?.message||err);}
  finally{cloudBusy=false;}
