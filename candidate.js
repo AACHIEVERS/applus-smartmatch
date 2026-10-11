@@ -79,7 +79,8 @@ function bindNavigation(){
 function chainFor(x){
  const ev=evidence.filter(e=>e.experience_id===x.id);
  const rf=reflections.filter(r=>r.experience_id===x.id);
- return {evidence:ev.length>0,verified:ev.some(e=>e.verified),reflections:rf.length>0,complete:ev.length>0&&rf.length>0};
+ const substantive=rf.some(r=>String(r.learning||"").trim()&&String(r.what_changed||"").trim());
+ return {evidence:ev.length>0,verified:ev.some(e=>e.verified),reflections:rf.length>0,complete:ev.length>0&&substantive};
 }
 
 function realExperiences(){return experiences.filter(x=>!["Interested","Planned"].includes(x.lifecycle_status));}
@@ -114,10 +115,10 @@ async function load(){
   db.from("growth_events").select("*").eq("user_id",user.id).order("created_at",{ascending:false})
  ];
  const q=await Promise.all(qs);
- if(q[0].error)throw q[0].error;
+ const failed=q.find(x=>x.error);if(failed)throw failed.error;
  profile=q[0].data;
  experiences=q[1].data||[];evidence=q[2].data||[];reflections=q[3].data||[];skills=q[4].data||[];
- goals=q[5].data||[];actions=q[6].data||[];portfolioSelections=q[7].data||[];growthEvents=q[8].data||[];
+ goals=q[5].data||[];actions=q[6].data||[];portfolioSelections=(q[7].data||[]).filter(p=>p.selected!==false);growthEvents=q[8].data||[];
  if(!profile){
   const n={user_id:user.id,display_name:user.user_metadata?.display_name||user.email,stage:"Sec 4",target_programme:"NUS Medicine",profile_data:{},academic_data:{},application_data:{},fsa_data:{},preferences_data:{}};
   const z=await db.from("candidate_profiles").insert(n).select().single();
@@ -252,9 +253,17 @@ window.toggleAction=async(id,done)=>{
 };
 
 window.openReflection=async id=>{
- const r=reflections.find(x=>x.id===id);if(!r)return;
-window.openReflection=async id=>{const r=reflections.find(x=>x.id===id);if(!r)return;openModal('<h2>Edit reflection</h2><p>'+esc((experiences.find(e=>e.id===r.experience_id)||{}).title||"Experience")+'</p><label>What happened?<textarea id="refH">'+esc(r.what_happened||"")+'</textarea></label><label>Role<textarea id="refR">'+esc(r.role_taken||"")+'</textarea></label><label>Difficulty<textarea id="refD">'+esc(r.difficulty||"")+'</textarea></label><label>Decision<textarea id="refDec">'+esc(r.decision_made||"")+'</textarea></label><label>Learning<textarea id="refL">'+esc(r.learning||"")+'</textarea></label><label>What changed?<textarea id="refC">'+esc(r.what_changed||"")+'</textarea></label><label>Next step<textarea id="refN">'+esc(r.next_step||"")+'</textarea></label><div class="modalactions"><button type="button" id="saveReflection" class="primary">Save reflection</button></div>');$("saveReflection").onclick=async()=>{if(!db||!user)return toast("Please sign in first.");const q=await db.from("reflections").update({what_happened:$("refH").value.trim(),role_taken:$("refR").value.trim(),difficulty:$("refD").value.trim(),decision_made:$("refDec").value.trim(),learning:$("refL").value.trim(),what_changed:$("refC").value.trim(),next_step:$("refN").value.trim(),updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",user.id);if(q.error)return toast(q.error.message);closeModal();await load();render();};};
- $("saveReflection").onclick=async()=>{const q=await db.from("reflections").update({what_happened:$("refH").value.trim(),role_taken:$("refR").value.trim(),difficulty:$("refD").value.trim(),decision_made:$("refDec").value.trim(),learning:$("refL").value.trim(),what_changed:$("refC").value.trim(),next_step:$("refN").value.trim(),updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",user.id);if(q.error)return toast(q.error.message);closeModal();await load();render()};
+ const r=reflections.find(x=>x.id===id);
+ if(!r)return toast("Reflection not found. Refresh and try again.");
+ const exp=experiences.find(e=>e.id===r.experience_id)||{};
+ openModal('<h2>Edit reflection</h2><p>'+esc(exp.title||"Experience")+'</p><label>What happened?<textarea id="refH">'+esc(r.what_happened||"")+'</textarea></label><label>Role<textarea id="refR">'+esc(r.role_taken||"")+'</textarea></label><label>Difficulty<textarea id="refD">'+esc(r.difficulty||"")+'</textarea></label><label>Decision<textarea id="refDec">'+esc(r.decision_made||"")+'</textarea></label><label>Learning<textarea id="refL">'+esc(r.learning||"")+'</textarea></label><label>What changed?<textarea id="refC">'+esc(r.what_changed||"")+'</textarea></label><label>Next step<textarea id="refN">'+esc(r.next_step||"")+'</textarea></label><div class="modalactions"><button type="button" id="saveReflection" class="primary">Save reflection</button></div>');
+ $("saveReflection").onclick=async()=>{
+  if(!db||!user)return toast("Please sign in first.");
+  const payload={what_happened:$("refH").value.trim(),role_taken:$("refR").value.trim(),difficulty:$("refD").value.trim(),decision_made:$("refDec").value.trim(),learning:$("refL").value.trim(),what_changed:$("refC").value.trim(),next_step:$("refN").value.trim(),updated_at:new Date().toISOString()};
+  const q=await db.from("reflections").update(payload).eq("id",id).eq("user_id",user.id);
+  if(q.error)return toast("Could not save reflection: "+q.error.message);
+  closeModal();await load();render();toast("Reflection saved.");
+ };
 };
 
 function bindForms(){
@@ -271,8 +280,23 @@ function bindForms(){
  document.querySelectorAll(".filters button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".filters button").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderJourney(b.dataset.filter||"all")}));
 }
 
-window.selectPortfolio=async id=>{if(!db||!user)return toast("Please sign in first.");if(portfolioSelections.length>=10)return toast("Top 10 is full.");const q=await db.from("portfolio_selections").insert({user_id:user.id,experience_id:id,rank:portfolioSelections.length+1,selected:true,rationale:"Selected from a complete Experience → Evidence → Reflection chain."});if(q.error)return toast(q.error.message);await load();render();go("portfolio")};
-window.removePortfolio=async id=>{if(!db||!user)return toast("Please sign in first.");const q=await db.from("portfolio_selections").delete().eq("experience_id",id).eq("user_id",user.id);if(q.error)return toast(q.error.message);await load();render();go("portfolio")};
+window.selectPortfolio=async id=>{
+ if(!db||!user)return toast("Please sign in first.");
+ const x=experiences.find(e=>e.id===id);
+ if(!x||!chainFor(x).complete)return toast("Complete this experience's evidence and substantive reflection first.");
+ if(portfolioSelections.some(p=>p.experience_id===id))return toast("This experience is already in your Top 10.");
+ if(portfolioSelections.length>=10)return toast("Top 10 is full. Remove one item before adding another.");
+ const rank=Math.max(0,...portfolioSelections.map(p=>Number(p.rank)||0))+1;
+ const q=await db.from("portfolio_selections").insert({user_id:user.id,experience_id:id,rank,selected:true,rationale:"Selected from a complete Experience → Evidence → Reflection chain."});
+ if(q.error)return toast("Could not add to Top 10: "+q.error.message);
+ await load();render();go("portfolio");toast("Added to Top 10.");
+};
+window.removePortfolio=async id=>{
+ if(!db||!user)return toast("Please sign in first.");
+ const q=await db.from("portfolio_selections").delete().eq("experience_id",id).eq("user_id",user.id);
+ if(q.error)return toast("Could not remove from Top 10: "+q.error.message);
+ await load();render();go("portfolio");toast("Removed from Top 10.");
+};
 
 async function start(){
  buildNav();bindNavigation();bindForms();
