@@ -1,12 +1,5 @@
 const STORE_KEY="smartmatch_medicine_candidate_v2";
-const initial={
- experiences:[
-  {id:1,year:"2026",title:"Biology Research",role:"Research participant",duration:"4 months",skills:["Scientific Thinking","Reasoning"],evidence:true,reflection:true,portfolio:"Strong",description:"Explored a biological question and presented findings.",impact:"Presented findings to the research team.",learning:"Learned to test assumptions and explain evidence clearly.",evidenceItems:["Research presentation"]},
-  {id:2,year:"2026",title:"Community Service",role:"Volunteer",duration:"6 months",skills:["Service","Communication"],evidence:true,reflection:true,portfolio:"Strong",description:"Supported weekly activities for an elderly community group.",impact:"Helped coordinate weekly activities and participant support.",learning:"Learned that listening changes how you serve people.",evidenceItems:["Volunteer record"]},
-  {id:3,year:"2026",title:"Debate",role:"Team member",duration:"1 term",skills:["Communication","Reasoning"],evidence:false,reflection:true,portfolio:"Supporting",description:"Practised structured discussion and responding to unfamiliar viewpoints.",impact:"Contributed to team preparation and live discussion.",learning:"Learned to slow down and understand an opposing view.",evidenceItems:[]}
- ],
- tasks:[false,false,false,false]
-};
+const initial={experiences:[],tasks:[false,false,false,false]};
 let state=JSON.parse(localStorage.getItem(STORE_KEY)||"null")||initial;
 function dedupeExperienceState(items){
  const seen=new Set(),out=[];
@@ -14,6 +7,16 @@ function dedupeExperienceState(items){
  return out;
 }
 state.experiences=dedupeExperienceState(state.experiences);
+const demoSeedDescriptions={
+ "biology research":"Explored a biological question and presented findings.",
+ "community service":"Supported weekly activities for an elderly community group.",
+ "debate":"Practised structured discussion and responding to unfamiliar viewpoints."
+};
+state.experiences=state.experiences.filter(x=>{
+ const title=String(x.title||"").toLowerCase().trim();
+ const desc=String(x.description||"").trim();
+ return !(demoSeedDescriptions[title]&&demoSeedDescriptions[title]===desc);
+});
 state.experiences=state.experiences.map(x=>({...x,impact:x.impact||"",learning:x.learning||"",evidenceItems:x.evidenceItems||[]}));
 function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state)); cloudSaveState();}
 
@@ -69,7 +72,7 @@ async function loadCloudState(){
      renderJourney();renderPortfolio();renderTasks();
    }else{
      await ensureProfile(profile);
-     await migrateLocalExperiences();
+     // Keep local-only records available for the user, but do not silently import demo/sample cards into the database.
      await syncTasks();
    }
  }catch(err){console.warn("Cloud sync unavailable:",err?.message||err);}
@@ -103,9 +106,7 @@ async function cloudSaveState(){
    const {data,error}=await cloudClient.from("experiences").upsert(payload).select().single();
    if(!error&&data){
      x.id=data.id;
-     await cloudClient.from("evidence").delete().eq("experience_id",data.id).eq("user_id",currentUser.id);
-     if((x.evidenceItems||[]).length) await cloudClient.from("evidence").insert(x.evidenceItems.map(v=>({user_id:currentUser.id,experience_id:data.id,evidence_type:"record",title:v})));
-     await cloudClient.from("reflections").delete().eq("experience_id",data.id).eq("user_id",currentUser.id); if(x.learning||x.impact) await cloudClient.from("reflections").insert({user_id:currentUser.id,experience_id:data.id,learning:x.learning||"",what_changed:x.impact||""});
+     // Evidence and full reflections are owned by Candidate OS. Never replace them from the lossy homepage cache.
    }
  }
  saveLocalOnly();
