@@ -16,3 +16,37 @@
 .auth-modal[aria-hidden="true"]{display:none!important}.auth-modal[aria-hidden="false"]{display:grid}
 
 .logo-mark{width:150px;height:52px;border-radius:0;background:transparent!important;padding:0;overflow:visible;display:flex;align-items:center;justify-content:flex-start}.logo-mark img{width:150px;height:52px;object-fit:contain;object-position:left center;display:block;border-radius:0}
+
+
+/* Global polish: keyboard access, readable focus states, and small-screen resilience. */
+:where(button,a,input,textarea,select,[tabindex]):focus-visible{outline:3px solid #64b5a6;outline-offset:3px}
+button:disabled{opacity:.55;cursor:not-allowed}
+input,textarea,select{max-width:100%}
+img{max-width:100%}
+.page-wrap{min-width:0}
+.journey-card,.portfolio-item,.simple-card,.focus-card,.next-card,.plan-item{min-width:0}
+@media(max-width:600px){
+  .topbar{height:auto;min-height:64px;flex-wrap:wrap;padding:10px 14px;gap:8px}
+  .brand{flex:1;min-width:0}
+  .logo-mark,.logo-mark img{width:112px;height:40px}
+  .profile-btn{padding:8px 10px}
+  .page-wrap{padding:34px 14px 56px}
+  .hero-row{padding:10px 0 28px;gap:22px}
+  .hero-row h1,.section-intro h1{font-size:clamp(36px,10vw,48px)}
+  .lead,.section-intro p{font-size:15px}
+  .focus-card,.next-card,.requirement-card,.plan-focus{padding:20px;border-radius:16px}
+  .focus-card h2,.next-card h2{font-size:23px}
+  .focus-card .primary,.next-card .primary{width:100%;white-space:normal}
+  .journey-card{grid-template-columns:1fr;gap:10px;padding:16px}
+  .record-state{text-align:left}
+  .portfolio-summary{grid-template-columns:1fr}
+  .portfolio-summary div{padding:15px}
+  .portfolio-summary strong{font-size:26px}
+  .dna-grid{grid-template-columns:1fr}
+  .gap-item{grid-template-columns:1fr}
+  .admission-step{padding:12px 8px}
+  .modal-box,.auth-box{padding:22px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
