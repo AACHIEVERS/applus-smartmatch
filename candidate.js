@@ -3,6 +3,7 @@
 */
 (function(){
 "use strict";
+window.__candidateSignoutReady=true;
 
 const SUPABASE_URL="https://xndgplkeayyrtzqgphlj.supabase.co";
 const SUPABASE_KEY="sb_publishable_QQ_FVe4_XJA8vaLWg9FXPQ_PwamKnNa";
