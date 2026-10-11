@@ -118,8 +118,25 @@ async function load(){
  const q=await Promise.all(qs);
  const failed=q.find(x=>x.error);if(failed)throw failed.error;
  profile=q[0].data;
- experiences=q[1].data||[];evidence=q[2].data||[];reflections=q[3].data||[];skills=q[4].data||[];
- goals=q[5].data||[];actions=q[6].data||[];portfolioSelections=(q[7].data||[]).filter(p=>p.selected!==false);growthEvents=q[8].data||[];
+ // Legacy demo cards are permitted on the public landing page only. Hide exact seeded examples
+ // from the authenticated Candidate OS; never delete database rows or alter genuine user records.
+ const demoSeeds=[
+  ["biology research","Explored a biological question and presented findings."],
+  ["community service","Supported weekly activities for an elderly community group."],
+  ["debate","Practised structured discussion and responding to unfamiliar viewpoints."]
+ ];
+ const isDemoSeed=x=>demoSeeds.some(([title,description])=>
+  String(x.title||"").trim().toLowerCase()===title &&
+  String(x.description||"").trim()===description
+ );
+ experiences=(q[1].data||[]).filter(x=>!isDemoSeed(x));
+ const ownExperienceIds=new Set(experiences.map(x=>x.id));
+ evidence=(q[2].data||[]).filter(x=>ownExperienceIds.has(x.experience_id));
+ reflections=(q[3].data||[]).filter(x=>ownExperienceIds.has(x.experience_id));
+ skills=q[4].data||[];
+ goals=q[5].data||[];actions=q[6].data||[];
+ portfolioSelections=(q[7].data||[]).filter(p=>p.selected!==false&&ownExperienceIds.has(p.experience_id));
+ growthEvents=q[8].data||[];
  if(!profile){
   const n={user_id:user.id,display_name:user.user_metadata?.display_name||user.email,stage:"Sec 4",target_programme:"NUS Medicine",profile_data:{},academic_data:{},application_data:{},fsa_data:{},preferences_data:{}};
   const z=await db.from("candidate_profiles").insert(n).select().single();
