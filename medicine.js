@@ -286,13 +286,14 @@ function renderCandidateDNA(){
  }));
  const gapList=document.getElementById("gapList");
  if(gapList){
-   gapList.innerHTML="<div class=\"eyebrow\" style=\"margin:12px 0 7px\">TOP DEVELOPMENT GAPS</div>"+candidate.gaps.slice(0,3).map((g,i)=>{
+   const priorities=candidate.gaps.filter(g=>g.gap>0).slice(0,2);
+   gapList.innerHTML="<div class=\"eyebrow\" style=\"margin:12px 0 7px\">YOUR 1–2 PRIORITIES</div><p class=\"gap-guidance\">Start with Priority 1. Keep Priority 2 in view, but do not start another activity until the first step produces real evidence or learning.</p>"+(priorities.length?priorities.map((g,i)=>{
      const a=advice[g.name]||{};
-     return "<div class=\"gap-item\"><div><b>0"+(i+1)+" · "+g.name+"</b><small>"+g.current+" current → "+g.target+" target</small><small>"+(a.action||"Strengthen this through evidence and reflection.")+"</small></div><span class=\"gap-num\">-"+g.gap+"</span></div>";
-   }).join("");
+     return "<div class=\"gap-item\"><div><b>0"+(i+1)+" · "+g.name+"</b><small>"+g.current+" current → "+g.target+" planning target</small><small>"+(i===0?"PRIMARY FOCUS · ":"SUPPORTING FOCUS · ")+(a.action||"Strengthen this through evidence and reflection.")+"</small></div><span class=\"gap-num\">-"+g.gap+"</span></div>";
+   }).join(""):"<div class=\"notice\">No current planning gap. Review your evidence and choose a new focus only when your record changes.</div>");
  }
  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
- set("focusTitle",next.focus);set("focusScore",next.current);set("nextAction",next.action);set("nextActionMeta",next.reason+" · Gap "+next.gap);
+ set("focusTitle",next.focus);set("focusScore",next.current);set("nextAction",next.action);set("nextActionMeta",next.reason+" · Planning gap "+next.gap+" points. These are heuristic development signals, not admissions scores.");
  set("planFocusTitle",next.focus);set("planCurrent",next.current+" current");set("planTarget",next.target+" target");
  const prog=document.getElementById("planProgress");if(prog)prog.style.width=next.current+"%";set("planFocusReason",next.reason);
  const rec=document.getElementById("planRecommendation");
