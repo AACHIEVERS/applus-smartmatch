@@ -240,7 +240,7 @@ function scoreDimension(d){
  related.forEach(x=>{
    score+=7;if(x.evidence)score+=3;if(x.reflection)score+=3;
    const ownership=/lead|owner|coordinat|organis|manage|responsib|project/i.test((x.role||"")+" "+(x.description||""));
-   if(ownership&&(d.name==="Leadership"||d.name==="Service"))score+=4;
+   if(ownership&&(d.name==="Leadership & Ownership"||d.name==="Service & Empathy"))score+=4;
    if(/research|science|biology|lab/i.test((x.title||"")+" "+(x.description||""))&&d.name==="Scientific Thinking")score+=4;
    if(/debate|present|discuss|communicat/i.test((x.title||"")+" "+(x.description||""))&&d.name==="Communication")score+=3;
  });
