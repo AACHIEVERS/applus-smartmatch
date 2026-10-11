@@ -233,9 +233,10 @@ const DNA_DIMENSIONS=[
  {name:"Reasoning & Ethics",target:72,aliases:["Reasoning","Ethics"]},
  {name:"Reflection & Character",target:70,aliases:["Reflection","Character"]}
 ];
-const DNA_BASE={Academic:62,"Scientific Thinking":52,"Medicine Motivation & Insight":50,"Service & Empathy":52,"Leadership & Ownership":58,Communication:52,"Reasoning & Ethics":55,"Reflection & Character":55};
 function scoreDimension(d){
- let score=DNA_BASE[d.name]||50;
+ // Scores are earned from the candidate's own recorded data; never seed a new user with invented baseline points.
+ let score=0;
+ // Academic readiness cannot be inferred from extracurricular experiences. Keep it at zero until verified academic data is supported and recorded.
  const related=state.experiences.filter(x=>(x.skills||[]).some(s=>d.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
  related.forEach(x=>{
    score+=7;if(x.evidence)score+=3;if(x.reflection)score+=3;
@@ -249,16 +250,17 @@ function scoreDimension(d){
 }
 function computeCandidateState(){
  const dimensions=DNA_DIMENSIONS.map(d=>({...d,current:scoreDimension(d)}));
- const gaps=dimensions.map(d=>({...d,gap:Math.max(0,d.target-d.current)})).sort((a,b)=>b.gap-a.gap);
+ const gaps=dimensions.map(d=>({...d,gap:Math.max(0,d.target-d.current)})).sort((a,b)=>{if(a.name==="Academic")return 1;if(b.name==="Academic")return -1;return b.gap-a.gap;});
  return {dimensions,gaps};
 }
 function trendFor(name){
+ if(name==="Academic")return "○ No academic data recorded";
  const xs=state.experiences.filter(x=>(x.skills||[]).some(s=>String(s).toLowerCase().includes(name.split(" ")[0].toLowerCase())));
- if(!xs.length)return "→ Building";
+ if(!xs.length)return "○ No record yet";
  return xs.filter(x=>x.evidence).length+xs.filter(x=>x.reflection).length>=2?"↑ Stronger":"↑ Developing";
 }
 function getNextBestAction(candidate){
- const gap=candidate.gaps[0];
+ const gap=candidate.gaps.find(g=>g.name!=="Academic")||candidate.gaps[0];
  const related=state.experiences.filter(x=>(x.skills||[]).some(s=>gap.aliases.some(a=>String(s).toLowerCase().includes(a.toLowerCase()))));
  const deepen=related.find(x=>x.portfolio!=="Strong"||!x.evidence||!x.reflection)||related[0];
  if(deepen)return {focus:gap.name,current:gap.current,target:gap.target,gap:gap.gap,action:gap.name==="Leadership"?"Take ownership of one meaningful outcome in "+deepen.title+".":"Deepen your role in "+deepen.title+" and record what changed.",reason:"You already have a real "+gap.name.toLowerCase()+" signal. Depth is more valuable now than starting another similar activity.",whyNow:"Your current "+gap.name.toLowerCase()+" signal is "+gap.current+", with a "+gap.gap+"-point development gap.",whyNot:"Adding another activity may repeat what you already have without increasing ownership, evidence or reflection.",experience:deepen.title};
@@ -268,7 +270,7 @@ function renderCandidateDNA(){
  const candidate=computeCandidateState(); const next=getNextBestAction(candidate);
  const grid=document.getElementById("dnaGrid");
  const advice={
-  "Academic":{why:"Academic readiness is a separate eligibility gate. This signal is for planning only, not an NUS admission score.",evidence:"Relevant grades, subject prerequisites and academic progress.",action:"Keep academic requirements on track first; then invest development time in experiences."},
+  "Academic":{why:"Academic readiness is a separate eligibility gate and cannot be inferred from activities. A zero here means no academic data has been recorded in this engine, not that your grades are poor.",evidence:"Verified grades, subject prerequisites and academic progress. Academic data entry is not yet connected to this score.",action:"Check official subject prerequisites and track your actual grades separately; do not treat this zero as an assessment of academic ability."},
   "Scientific Thinking":{why:"Your record shows how you investigate questions, use evidence and test assumptions.",evidence:"Research, experiments, projects, data analysis, scientific presentations.",action:"Deepen one investigation and record the question, method, evidence and conclusion."},
   "Medicine Motivation & Insight":{why:"NUS FSA includes an interview station that draws out motivation and aptitude to study medicine. This is not a test of medical knowledge.",evidence:"Sustained people-facing experiences, thoughtful observations, conversations, service and reflections about why healthcare matters to you.",action:"Deepen one existing experience and record what you learned about people, healthcare and your own motivation."},
   "Service & Empathy":{why:"Service and insight matter more when they show genuine attention to other people rather than simply hours collected.",evidence:"Sustained service, listening, support, community contribution and feedback from people you worked with.",action:"Continue one meaningful service commitment and document a concrete change or contribution."},
